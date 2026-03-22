@@ -1,12 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { isAdminEmail } from '@/lib/admin-config';
 
 export type UserRole = 'student' | 'teacher' | 'super_admin';
-
-const ADMIN_EMAILS = [
-  'roshansharma404error@gmail.com',
-  'admin@academichub.com'
-];
 
 export interface User {
   id: string;
@@ -27,26 +23,21 @@ interface UserState {
 }
 
 const DEFAULT_USER: User = {
-  id: 'demo-user',
-  clerkUserId: 'demo-clerk-id',
-  email: 'roshansharma404error@gmail.com',
-  name: 'Admin User',
-  role: 'super_admin',
-  branch: 'cs',
-  semester: 5
+  id: 'guest-user',
+  clerkUserId: '',
+  email: '',
+  name: 'Guest',
+  role: 'student',
+  branch: '',
+  semester: 1
 };
-
-function checkIsAdmin(email: string | undefined): boolean {
-  if (!email) return false;
-  return ADMIN_EMAILS.includes(email.toLowerCase());
-}
 
 export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
       user: DEFAULT_USER,
       setUser: (user) => {
-        if (user && checkIsAdmin(user.email)) {
+        if (user && isAdminEmail(user.email)) {
           user.role = 'super_admin';
         }
         set({ user });
@@ -58,7 +49,7 @@ export const useUserStore = create<UserState>()(
       isAdmin: () => {
         const { user } = get();
         if (user?.role === 'super_admin') return true;
-        return checkIsAdmin(user?.email);
+        return isAdminEmail(user?.email);
       }
     }),
     {

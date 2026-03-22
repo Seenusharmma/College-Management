@@ -12,13 +12,30 @@ import { errorHandler } from './middlewares/errorHandler.js';
 
 const app = express();
 
-app.use(helmet());
-app.use(cors({
-  origin: config.frontendUrl,
-  credentials: true
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'https:', 'res.cloudinary.com'],
+      scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.clerk.com'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      connectSrc: ["'self'", 'https://api.clerk.com', 'https://cloudinary.com'],
+    },
+  },
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+const corsOptions: cors.CorsOptions = {
+  origin: config.frontendUrl,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
+
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -26,6 +43,13 @@ const limiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' }
 });
 app.use('/api', limiter);
+
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: 'Too many upload requests, please try again later.' }
+});
+app.use('/api/upload', uploadLimiter);
 
 app.use('/api/content', contentRoutes);
 app.use('/api/auth', authRoutes);
@@ -41,9 +65,8 @@ app.use(errorHandler);
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(config.port, () => {
-      console.log(`Server running on port ${config.port}`);
-    });
+    const mode = config.isProduction ? 'Production' : 'Development';
+    console.log(`${mode} server starting on port ${config.port}`);
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);

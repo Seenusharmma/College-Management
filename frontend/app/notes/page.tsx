@@ -4,17 +4,13 @@ import { useEffect, useState } from 'react';
 import { useContentStore } from '@/hooks/useContent';
 import { ContentCard, Pagination } from '@/components/shared';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useUserStore } from '@/store';
-import Link from 'next/link';
-import { BookOpen, Download, Eye, Upload, ArrowRight } from 'lucide-react';
+import { BookOpen, Download, Eye, ArrowRight } from 'lucide-react';
 import { ContentFilters } from '@/types';
 import { downloadFile } from '@/lib/download-file';
 import { toast } from 'sonner';
 
 export default function NotesPage() {
   const { contents, filters, setFilters, pagination, fetchContents, isLoading } = useContentStore();
-  const { isTeacher } = useUserStore();
   const [localFilters, setLocalFilters] = useState<ContentFilters>({ type: 'notes' });
 
   useEffect(() => {
@@ -50,21 +46,11 @@ export default function NotesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Notes</h1>
-          <p className="text-zinc-500 dark:text-zinc-400">
-            Browse study notes and educational materials
-          </p>
-        </div>
-        {isTeacher() && (
-          <Link href="/upload">
-            <Button>
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Notes
-            </Button>
-          </Link>
-        )}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Notes</h1>
+        <p className="text-zinc-500 dark:text-zinc-400">
+          Browse study notes and educational materials
+        </p>
       </div>
 
       <Card>
@@ -79,7 +65,7 @@ export default function NotesPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{pagination.total}</p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Total Notes</p>
+                <p className="text-xs text-zinc-500">Total Notes</p>
               </div>
             </div>
             <div className="flex items-center gap-4 rounded-lg border p-4">
@@ -88,7 +74,7 @@ export default function NotesPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{notesContents.length}</p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Displayed</p>
+                <p className="text-xs text-zinc-500">Displayed</p>
               </div>
             </div>
             <div className="flex items-center gap-4 rounded-lg border p-4">
@@ -97,7 +83,7 @@ export default function NotesPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{totalViews}</p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Total Views</p>
+                <p className="text-xs text-zinc-500">Total Views</p>
               </div>
             </div>
             <div className="flex items-center gap-4 rounded-lg border p-4">
@@ -106,7 +92,7 @@ export default function NotesPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{totalDownloads}</p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Downloads</p>
+                <p className="text-xs text-zinc-500">Downloads</p>
               </div>
             </div>
           </div>
@@ -116,9 +102,9 @@ export default function NotesPage() {
       <div>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">All Notes</h2>
-          <Link href="/search" className="text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50">
+          <a href="/search" className="text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50">
             Advanced Search <ArrowRight className="inline h-4 w-4" />
-          </Link>
+          </a>
         </div>
         
         {isLoading ? (
@@ -143,17 +129,10 @@ export default function NotesPage() {
           <Card className="py-12">
             <CardContent className="flex flex-col items-center justify-center text-center">
               <BookOpen className="mb-4 h-12 w-12 text-zinc-400" />
-              <h3 className="mb-2 text-lg font-semibold">No notes uploaded yet</h3>
-              <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
-                {isTeacher() 
-                  ? 'Be the first to upload study notes for your students!'
-                  : 'Check back later for new study notes'}
+              <h3 className="mb-2 text-lg font-semibold">No notes available</h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Check back later for new study notes
               </p>
-              {isTeacher() && (
-                <Link href="/upload">
-                  <Button variant="outline">Upload Notes</Button>
-                </Link>
-              )}
             </CardContent>
           </Card>
         ) : (

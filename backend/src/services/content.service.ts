@@ -1,7 +1,6 @@
-import { Content, IContent, ContentType } from '../models/content.model.js';
-import { User } from '../models/user.model.js';
-import { CreateContentInput, UpdateContentInput, ContentFilters } from '../validators/content.validator.js';
-import { PaginatedResponse } from '../types/index.js';
+import { Content, IContent } from '../models/content.model.js';
+import { CreateContentInput, UpdateContentInput } from '../validators/content.validator.js';
+import { PaginatedResponse, ContentFilters } from '../types/index.js';
 import { AppError } from '../middlewares/errorHandler.js';
 import { uploadToCloudinary, deleteFromCloudinary } from './cloudinary.service.js';
 import { Types } from 'mongoose';
@@ -84,7 +83,7 @@ export class ContentService {
     ]);
 
     return {
-      data: data as IContent[],
+      data: data as unknown as IContent[],
       pagination: {
         page,
         limit,
@@ -111,7 +110,7 @@ export class ContentService {
       throw new AppError('Content not found', 404);
     }
 
-    return content as IContent;
+    return content as unknown as IContent;
   }
 
   async update(

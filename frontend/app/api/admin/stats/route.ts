@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { clerkClient } from '@clerk/nextjs/server';
-import { Content, User } from '@/lib/mongodb-content';
+import { Content } from '@/lib/mongodb-content';
 import { connectDB } from '@/lib/mongodb';
 import { User as UserModel } from '@/lib/mongodb-user';
-
-const ADMIN_EMAILS = [
-  'roshansharma404error@gmail.com',
-  'admin@academichub.com'
-];
+import { isAdminEmail } from '@/lib/admin-config';
 
 async function checkIsSuperAdmin(userId: string): Promise<boolean> {
   try {
@@ -24,7 +20,7 @@ async function checkIsSuperAdmin(userId: string): Promise<boolean> {
     const clerkUser = await clerk.users.getUser(userId);
     const email = clerkUser.emailAddresses[0]?.emailAddress || '';
     
-    if (ADMIN_EMAILS.includes(email.toLowerCase())) {
+    if (isAdminEmail(email)) {
       return true;
     }
     

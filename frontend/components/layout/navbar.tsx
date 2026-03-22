@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   LayoutDashboard, 
-  Upload, 
   Search, 
   User, 
   LogOut,
@@ -20,20 +19,22 @@ import {
   FileText,
   Calendar,
   Image,
-  Shield
+  Shield,
+  ClipboardList
 } from 'lucide-react';
 import { useState } from 'react';
 import { SignOutButton, useUser } from '@clerk/nextjs';
+import { isAdminEmail } from '@/lib/admin-config';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, teacherOnly: false },
-  { href: '/notes', label: 'Notes', icon: BookOpen, teacherOnly: false },
-  { href: '/assignments', label: 'Assignments', icon: FileText, teacherOnly: false },
-  { href: '/events', label: 'Events', icon: Calendar, teacherOnly: false },
-  { href: '/gallery', label: 'Gallery', icon: Image, teacherOnly: false },
-  { href: '/upload', label: 'Upload', icon: Upload, teacherOnly: true },
-  { href: '/search', label: 'Search', icon: Search, teacherOnly: false },
-  { href: '/profile', label: 'Profile', icon: User, teacherOnly: false },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/notes', label: 'Notes', icon: BookOpen },
+  { href: '/assignments', label: 'Assignments', icon: FileText },
+  { href: '/previous-year-questions', label: 'PYQ', icon: ClipboardList },
+  { href: '/events', label: 'Events', icon: Calendar },
+  { href: '/gallery', label: 'Gallery', icon: Image },
+  { href: '/search', label: 'Search', icon: Search },
+  { href: '/profile', label: 'Profile', icon: User },
   { href: '/admin', label: 'Admin', icon: Shield, adminOnly: true },
 ];
 
@@ -46,12 +47,11 @@ export function Navbar() {
 
   const userName = clerkUser?.fullName || userStore.user?.name || 'User';
   const userAvatar = clerkUser?.imageUrl || userStore.user?.avatar;
-  const isTeacher = userStore.isTeacher();
-  const isAdminUser = userStore.isAdmin();
+  const clerkEmail = clerkUser?.emailAddresses[0]?.emailAddress;
+  const isAdminUser = userStore.isAdmin() || isAdminEmail(clerkEmail);
   
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly) return isAdminUser;
-    if (item.teacherOnly) return isTeacher;
     return true;
   });
 

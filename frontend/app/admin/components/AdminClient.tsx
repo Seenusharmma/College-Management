@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import { 
   Users, FileText, Download, Eye, Upload, Trash2, Edit2, 
-  BarChart3, CheckCircle, XCircle, TrendingUp, Calendar, Shield, UserCog
+  BarChart3, CheckCircle, XCircle, TrendingUp, Calendar, Shield, UserCog, Image, X, Link as LinkIcon, BookOpen
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { downloadFile } from '@/lib/download-file';
@@ -38,6 +38,75 @@ interface ContentFormData {
   semester: string;
   subject: string;
   tags: string;
+  file: File | null;
+}
+
+interface GalleryFormData {
+  title: string;
+  description: string;
+  file: File | null;
+}
+
+interface GalleryItem {
+  _id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  publicId: string;
+  uploadedBy: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface EventData {
+  _id: string;
+  title: string;
+  description: string;
+  date: string;
+  location: string;
+  imageUrl?: string;
+  link?: string;
+  uploadedBy: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface EventFormData {
+  title: string;
+  description: string;
+  date: string;
+  location: string;
+  link: string;
+  file: File | null;
+}
+
+interface PYQData {
+  _id: string;
+  title: string;
+  description: string;
+  year: number;
+  examType: string;
+  branch: string;
+  semester: number;
+  subject: string;
+  fileUrl: string;
+  publicId: string;
+  fileType: string;
+  uploadedBy: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+interface PYQFormData {
+  title: string;
+  description: string;
+  year: string;
+  examType: string;
+  branch: string;
+  semester: string;
+  subject: string;
   file: File | null;
 }
 
@@ -69,16 +138,25 @@ interface AdminClientProps {
 }
 
 export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'upload' | 'users'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'upload' | 'users' | 'gallery' | 'events' | 'pyq'>('overview');
   const [contents, setContents] = useState<Content[]>([]);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const [events, setEvents] = useState<EventData[]>([]);
+  const [pyqs, setPyqs] = useState<PYQData[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<UserData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [editingContent, setEditingContent] = useState<Content | null>(null);
+  const [editingGallery, setEditingGallery] = useState<GalleryItem | null>(null);
+  const [editingEvent, setEditingEvent] = useState<EventData | null>(null);
+  const [editingEventFile, setEditingEventFile] = useState<File | null>(null);
+  const [editingPYQ, setEditingPYQ] = useState<PYQData | null>(null);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState<string>('');
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewEventImage, setPreviewEventImage] = useState<string | null>(null);
   const [formData, setFormData] = useState<ContentFormData>({
     title: '',
     description: '',
@@ -89,11 +167,37 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
     tags: '',
     file: null
   });
+  const [galleryFormData, setGalleryFormData] = useState<GalleryFormData>({
+    title: '',
+    description: '',
+    file: null
+  });
+  const [eventFormData, setEventFormData] = useState<EventFormData>({
+    title: '',
+    description: '',
+    date: '',
+    location: '',
+    link: '',
+    file: null
+  });
+  const [pyqFormData, setPyqFormData] = useState<PYQFormData>({
+    title: '',
+    description: '',
+    year: new Date().getFullYear().toString(),
+    examType: 'final',
+    branch: 'cs',
+    semester: '1',
+    subject: '',
+    file: null
+  });
 
   useEffect(() => {
     fetchContent();
     fetchStats();
     fetchUsers();
+    fetchGallery();
+    fetchEvents();
+    fetchPYQs();
   }, []);
 
   const fetchContent = async () => {
@@ -131,6 +235,144 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
       }
     } catch (error) {
       console.error('Failed to fetch users:', error);
+    }
+  };
+
+  const fetchGallery = async () => {
+    try {
+      const response = await fetch('/api/gallery');
+      const data = await response.json();
+      if (data.success) {
+        setGalleryItems(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch gallery:', error);
+    }
+  };
+
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch('/api/events');
+      const data = await response.json();
+      if (data.success) {
+        setEvents(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch events:', error);
+    }
+  };
+
+  const fetchPYQs = async () => {
+    try {
+      const response = await fetch('/api/pyq?limit=100');
+      const data = await response.json();
+      if (data.success) {
+        setPyqs(data.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch PYQs:', error);
+    }
+  };
+
+  const handlePYQUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pyqFormData.file) {
+      toast.error('Please select a file');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('title', pyqFormData.title);
+      uploadFormData.append('description', pyqFormData.description);
+      uploadFormData.append('year', pyqFormData.year);
+      uploadFormData.append('examType', pyqFormData.examType);
+      uploadFormData.append('branch', pyqFormData.branch);
+      uploadFormData.append('semester', pyqFormData.semester);
+      uploadFormData.append('subject', pyqFormData.subject);
+      uploadFormData.append('file', pyqFormData.file);
+      uploadFormData.append('uploadedBy', userEmail);
+
+      const response = await fetch('/api/pyq', {
+        method: 'POST',
+        body: uploadFormData
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Question paper uploaded successfully!');
+        setPyqFormData({
+          title: '',
+          description: '',
+          year: new Date().getFullYear().toString(),
+          examType: 'final',
+          branch: 'cs',
+          semester: '1',
+          subject: '',
+          file: null
+        });
+        fetchPYQs();
+      } else {
+        toast.error(data.error || 'Upload failed');
+      }
+    } catch (error) {
+      toast.error('Upload failed');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeletePYQ = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this question paper?')) return;
+
+    try {
+      const response = await fetch(`/api/pyq/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        toast.success('Question paper deleted successfully');
+        setPyqs(pyqs.filter(p => p._id !== id));
+      } else {
+        toast.error('Failed to delete question paper');
+      }
+    } catch {
+      toast.error('Failed to delete question paper');
+    }
+  };
+
+  const handleUpdatePYQ = async () => {
+    if (!editingPYQ) return;
+
+    setIsUploading(true);
+    try {
+      const response = await fetch(`/api/pyq/${editingPYQ._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editingPYQ.title,
+          description: editingPYQ.description,
+          year: editingPYQ.year,
+          examType: editingPYQ.examType,
+          branch: editingPYQ.branch,
+          semester: editingPYQ.semester,
+          subject: editingPYQ.subject,
+          isActive: editingPYQ.isActive
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Question paper updated successfully');
+        setEditingPYQ(null);
+        fetchPYQs();
+      } else {
+        toast.error('Failed to update question paper');
+      }
+    } catch {
+      toast.error('Failed to update question paper');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -183,6 +425,149 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
     }
   };
 
+  const handleGalleryUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!galleryFormData.file) {
+      toast.error('Please select an image');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', galleryFormData.file);
+      uploadFormData.append('title', galleryFormData.title);
+      uploadFormData.append('description', galleryFormData.description);
+
+      const response = await fetch('/api/gallery', {
+        method: 'POST',
+        body: uploadFormData
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Gallery image uploaded successfully!');
+        setGalleryFormData({
+          title: '',
+          description: '',
+          file: null
+        });
+        setPreviewImage(null);
+        fetchGallery();
+      } else {
+        toast.error(data.error || 'Upload failed');
+      }
+    } catch (error) {
+      toast.error('Upload failed');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleEventUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!eventFormData.title || !eventFormData.date) {
+      toast.error('Title and date are required');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('title', eventFormData.title);
+      uploadFormData.append('description', eventFormData.description);
+      uploadFormData.append('date', eventFormData.date);
+      uploadFormData.append('location', eventFormData.location);
+      uploadFormData.append('link', eventFormData.link);
+      if (eventFormData.file) {
+        uploadFormData.append('file', eventFormData.file);
+      }
+
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        body: uploadFormData
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Event created successfully!');
+        setEventFormData({
+          title: '',
+          description: '',
+          date: '',
+          location: '',
+          link: '',
+          file: null
+        });
+        setPreviewEventImage(null);
+        fetchEvents();
+      } else {
+        toast.error(data.error || 'Failed to create event');
+      }
+    } catch (error) {
+      toast.error('Failed to create event');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeleteEvent = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this event?')) return;
+
+    try {
+      const response = await fetch(`/api/events/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        toast.success('Event deleted successfully');
+        setEvents(events.filter(e => e._id !== id));
+      } else {
+        toast.error('Failed to delete event');
+      }
+    } catch {
+      toast.error('Failed to delete event');
+    }
+  };
+
+  const handleUpdateEvent = async () => {
+    if (!editingEvent) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', editingEvent.title);
+      formData.append('description', editingEvent.description);
+      formData.append('date', editingEvent.date);
+      formData.append('location', editingEvent.location);
+      formData.append('link', editingEvent.link || '');
+      if (editingEvent.imageUrl === null || editingEvent.imageUrl === undefined) {
+        formData.append('removeImage', 'true');
+      }
+      if (editingEventFile) {
+        formData.append('file', editingEventFile);
+      }
+
+      const response = await fetch(`/api/events/${editingEvent._id}`, {
+        method: 'PUT',
+        body: formData
+      });
+
+      if (response.ok) {
+        toast.success('Event updated successfully');
+        setEditingEvent(null);
+        setEditingEventFile(null);
+        fetchEvents();
+      } else {
+        toast.error('Failed to update event');
+      }
+    } catch {
+      toast.error('Failed to update event');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this content?')) return;
 
@@ -200,6 +585,25 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
       }
     } catch {
       toast.error('Failed to delete content');
+    }
+  };
+
+  const handleDeleteGallery = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this image?')) return;
+
+    try {
+      const response = await fetch(`/api/gallery/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        toast.success('Gallery image deleted successfully');
+        setGalleryItems(galleryItems.filter(g => g._id !== id));
+      } else {
+        toast.error('Failed to delete image');
+      }
+    } catch {
+      toast.error('Failed to delete image');
     }
   };
 
@@ -226,6 +630,32 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
       }
     } catch {
       toast.error('Failed to update content');
+    }
+  };
+
+  const handleUpdateGallery = async () => {
+    if (!editingGallery) return;
+
+    try {
+      const response = await fetch(`/api/gallery/${editingGallery._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editingGallery.title,
+          description: editingGallery.description,
+          isActive: editingGallery.isActive
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Gallery item updated successfully');
+        setEditingGallery(null);
+        fetchGallery();
+      } else {
+        toast.error('Failed to update gallery item');
+      }
+    } catch {
+      toast.error('Failed to update gallery item');
     }
   };
 
@@ -261,6 +691,30 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
       await downloadFile({ url: content.fileUrl, filename });
     } catch {
       toast.error('Failed to download file');
+    }
+  };
+
+  const handleGalleryFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setGalleryFormData({ ...galleryFormData, file });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleEventFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEventFormData({ ...eventFormData, file });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewEventImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -317,19 +771,22 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
         </div>
       </div>
 
-      <div className="flex gap-2 border-b">
-        {(['overview', 'content', 'upload', 'users'] as const).map((tab) => (
+      <div className="flex gap-2 border-b overflow-x-auto">
+        {(['overview', 'content', 'upload', 'gallery', 'events', 'pyq', 'users'] as const).map((tab) => (
           <Button
             key={tab}
             variant={activeTab === tab ? 'default' : 'ghost'}
             onClick={() => setActiveTab(tab)}
-            className="rounded-b-none"
+            className="rounded-b-none whitespace-nowrap"
           >
             {tab === 'overview' && <BarChart3 className="mr-2 h-4 w-4" />}
             {tab === 'content' && <FileText className="mr-2 h-4 w-4" />}
             {tab === 'upload' && <Upload className="mr-2 h-4 w-4" />}
+            {tab === 'gallery' && <Image className="mr-2 h-4 w-4" />}
+            {tab === 'events' && <Calendar className="mr-2 h-4 w-4" />}
+            {tab === 'pyq' && <BookOpen className="mr-2 h-4 w-4" />}
             {tab === 'users' && <UserCog className="mr-2 h-4 w-4" />}
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab === 'pyq' ? 'PYQ' : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </Button>
         ))}
       </div>
@@ -451,37 +908,6 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
               </CardContent>
             </Card>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Student Usage Over Time
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[250px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stats?.recentActivity?.length ? stats.recentActivity : [
-                    { date: 'Mon', uploads: 12, downloads: 45 },
-                    { date: 'Tue', uploads: 8, downloads: 62 },
-                    { date: 'Wed', uploads: 15, downloads: 78 },
-                    { date: 'Thu', uploads: 10, downloads: 55 },
-                    { date: 'Fri', uploads: 20, downloads: 95 },
-                    { date: 'Sat', uploads: 5, downloads: 30 },
-                    { date: 'Sun', uploads: 3, downloads: 20 }
-                  ]}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="uploads" name="Uploads" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="downloads" name="Downloads" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       )}
 
@@ -520,14 +946,6 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
                       <p className="text-sm text-zinc-500">
                         {content.branch} | Sem {content.semester} | {content.subject}
                       </p>
-                      <div className="flex gap-4 mt-2 text-xs text-zinc-400">
-                        <span className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" /> {content.views || 0}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Download className="h-3 w-3" /> {content.downloads || 0}
-                        </span>
-                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
@@ -666,86 +1084,531 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
         </Card>
       )}
 
-      {activeTab === 'users' && (
+      {activeTab === 'gallery' && (
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                User Management
-              </CardTitle>
-              <p className="text-sm text-zinc-500">
-                Manage user roles and permissions
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4 mb-6">
-                <Input
-                  placeholder="Search by name or email..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="max-w-xs"
-                />
-                <select
-                  value={filterRole}
-                  onChange={(e) => setFilterRole(e.target.value)}
-                  className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
-                >
-                  <option value="">All Roles</option>
-                  {ROLES.map((role) => (
-                    <option key={role.value} value={role.value}>{role.label}</option>
-                  ))}
-                </select>
-              </div>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Upload Gallery Image</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleGalleryUpload} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Title *</label>
+                    <Input
+                      value={galleryFormData.title}
+                      onChange={(e) => setGalleryFormData({ ...galleryFormData, title: e.target.value })}
+                      placeholder="Enter image title"
+                      required
+                    />
+                  </div>
 
-              <div className="space-y-4">
-                {filteredUsers.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <Users className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
-                    <p className="text-zinc-500">
-                      {searchQuery || filterRole ? 'No users match your filters' : 'No users found'}
-                    </p>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Description</label>
+                    <Textarea
+                      value={galleryFormData.description}
+                      onChange={(e) => setGalleryFormData({ ...galleryFormData, description: e.target.value })}
+                      placeholder="Enter image description"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Image *</label>
+                    <input
+                      type="file"
+                      onChange={handleGalleryFileChange}
+                      className="w-full"
+                      accept="image/*"
+                      required
+                    />
+                    {previewImage && (
+                      <div className="relative mt-2">
+                        <img src={previewImage} alt="Preview" className="h-40 w-full object-cover rounded-lg" />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute -right-2 -top-2 h-6 w-6"
+                          onClick={() => {
+                            setPreviewImage(null);
+                            setGalleryFormData({ ...galleryFormData, file: null });
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  <Button type="submit" disabled={isUploading} className="w-full">
+                    {isUploading ? 'Uploading...' : 'Upload Image'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Gallery Images ({galleryItems.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {galleryItems.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <Image className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
+                    <p className="text-zinc-500">No gallery images yet</p>
                   </div>
                 ) : (
-                  <div className="divide-y">
-                    {filteredUsers.map((u) => (
-                      <div key={u._id} className="flex items-center justify-between py-4">
-                        <div className="flex items-center gap-4">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={u.avatar} alt={u.name} />
-                            <AvatarFallback>{u.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium">{u.name}</p>
-                              {getRoleBadge(u.role)}
+                  <div className="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto">
+                    {galleryItems.map((item) => (
+                      <div key={item._id} className="relative group">
+                        <img
+                          src={item.imageUrl}
+                          alt={item.title}
+                          className="h-32 w-full object-cover rounded-lg"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setEditingGallery(item)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleDeleteGallery(item._id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <p className="text-xs truncate mt-1">{item.title}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'events' && (
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Create New Event</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleEventUpload} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Title *</label>
+                    <Input
+                      value={eventFormData.title}
+                      onChange={(e) => setEventFormData({ ...eventFormData, title: e.target.value })}
+                      placeholder="Enter event title"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Description</label>
+                    <Textarea
+                      value={eventFormData.description}
+                      onChange={(e) => setEventFormData({ ...eventFormData, description: e.target.value })}
+                      placeholder="Enter event description"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Date *</label>
+                      <Input
+                        type="date"
+                        value={eventFormData.date}
+                        onChange={(e) => setEventFormData({ ...eventFormData, date: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Location</label>
+                      <Input
+                        value={eventFormData.location}
+                        onChange={(e) => setEventFormData({ ...eventFormData, location: e.target.value })}
+                        placeholder="Event location"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Registration Link</label>
+                    <Input
+                      value={eventFormData.link}
+                      onChange={(e) => setEventFormData({ ...eventFormData, link: e.target.value })}
+                      placeholder="https://..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Cover Image</label>
+                    <input
+                      type="file"
+                      onChange={handleEventFileChange}
+                      className="w-full"
+                      accept="image/*"
+                    />
+                    {previewEventImage && (
+                      <div className="relative mt-2">
+                        <img src={previewEventImage} alt="Preview" className="h-40 w-full object-cover rounded-lg" />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute -right-2 -top-2 h-6 w-6"
+                          onClick={() => {
+                            setPreviewEventImage(null);
+                            setEventFormData({ ...eventFormData, file: null });
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  <Button type="submit" disabled={isUploading} className="w-full">
+                    {isUploading ? 'Creating...' : 'Create Event'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Events ({events.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {events.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <Calendar className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
+                    <p className="text-zinc-500">No events created yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto">
+                    {events.map((event) => (
+                      <div key={event._id} className="border rounded-lg p-4">
+                        <div className="flex gap-4">
+                          {event.imageUrl && (
+                            <img
+                              src={event.imageUrl}
+                              alt={event.title}
+                              className="h-20 w-32 object-cover rounded-lg"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <h3 className="font-semibold">{event.title}</h3>
+                                <p className="text-sm text-zinc-500">{event.description?.slice(0, 60)}...</p>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => setEditingEvent(event)}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleDeleteEvent(event._id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
-                            <p className="text-sm text-zinc-500">{u.email}</p>
-                            {u.branch && (
-                              <p className="text-xs text-zinc-400">
-                                {u.branch.toUpperCase()} {u.semester && `| Semester ${u.semester}`}
-                              </p>
-                            )}
+                            <div className="flex gap-4 mt-2 text-xs text-zinc-500">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {new Date(event.date).toLocaleDateString()}
+                              </span>
+                              {event.location && (
+                                <span>{event.location}</span>
+                              )}
+                              {event.link && (
+                                <a
+                                  href={event.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-blue-500 hover:underline"
+                                >
+                                  <LinkIcon className="h-3 w-3" />
+                                  Link
+                                </a>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'pyq' && (
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Upload Question Paper</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handlePYQUpload} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Title *</label>
+                    <Input
+                      value={pyqFormData.title}
+                      onChange={(e) => setPyqFormData({ ...pyqFormData, title: e.target.value })}
+                      placeholder="e.g., Database Systems - Final Exam 2024"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Subject *</label>
+                    <Input
+                      value={pyqFormData.subject}
+                      onChange={(e) => setPyqFormData({ ...pyqFormData, subject: e.target.value })}
+                      placeholder="e.g., Database Systems"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Year *</label>
+                      <select
+                        value={pyqFormData.year}
+                        onChange={(e) => setPyqFormData({ ...pyqFormData, year: e.target.value })}
+                        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                      >
+                        {[2025, 2024, 2023, 2022, 2021, 2020].map((year) => (
+                          <option key={year} value={year}>{year}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Exam Type *</label>
+                      <select
+                        value={pyqFormData.examType}
+                        onChange={(e) => setPyqFormData({ ...pyqFormData, examType: e.target.value })}
+                        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                      >
+                        <option value="midterm">Mid Term</option>
+                        <option value="final">Final Exam</option>
+                        <option value="quiz">Quiz</option>
+                        <option value="assignment">Assignment</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Branch *</label>
+                      <select
+                        value={pyqFormData.branch}
+                        onChange={(e) => setPyqFormData({ ...pyqFormData, branch: e.target.value })}
+                        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                      >
+                        <option value="cs">Computer Science</option>
+                        <option value="it">Information Technology</option>
+                        <option value="ece">Electronics & Comm</option>
+                        <option value="ee">Electrical</option>
+                        <option value="me">Mechanical</option>
+                        <option value="ce">Civil</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Semester *</label>
+                      <select
+                        value={pyqFormData.semester}
+                        onChange={(e) => setPyqFormData({ ...pyqFormData, semester: e.target.value })}
+                        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                          <option key={sem} value={sem}>Semester {sem}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Description</label>
+                    <Textarea
+                      value={pyqFormData.description}
+                      onChange={(e) => setPyqFormData({ ...pyqFormData, description: e.target.value })}
+                      placeholder="Optional description"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">PDF File *</label>
+                    <input
+                      type="file"
+                      onChange={(e) => setPyqFormData({ ...pyqFormData, file: e.target.files?.[0] || null })}
+                      className="w-full"
+                      accept=".pdf"
+                      required
+                    />
+                  </div>
+
+                  <Button type="submit" disabled={isUploading} className="w-full">
+                    {isUploading ? 'Uploading...' : 'Upload Question Paper'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Question Papers ({pyqs.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {pyqs.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <BookOpen className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
+                    <p className="text-zinc-500">No question papers uploaded yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                    {pyqs.map((pyq) => (
+                      <div key={pyq._id} className="flex items-center justify-between rounded-lg border p-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant="outline" className="text-xs">
+                              {pyq.examType}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              {pyq.year}
+                            </Badge>
+                          </div>
+                          <p className="font-medium truncate">{pyq.title}</p>
+                          <p className="text-sm text-zinc-500 truncate">
+                            {pyq.subject} | Sem {pyq.semester}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 ml-2">
                           <Button
                             variant="outline"
-                            size="sm"
-                            onClick={() => setEditingUser(u)}
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setEditingPYQ(pyq)}
                           >
-                            <UserCog className="mr-2 h-4 w-4" />
-                            Change Role
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleDeletePYQ(pyq._id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
+      )}
+
+      {activeTab === 'users' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              User Management
+            </CardTitle>
+            <p className="text-sm text-zinc-500">
+              Manage user roles and permissions
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4 mb-6">
+              <Input
+                placeholder="Search by name or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-xs"
+              />
+              <select
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+              >
+                <option value="">All Roles</option>
+                {ROLES.map((role) => (
+                  <option key={role.value} value={role.value}>{role.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-4">
+              {filteredUsers.length === 0 ? (
+                <div className="py-12 text-center">
+                  <Users className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
+                  <p className="text-zinc-500">
+                    {searchQuery || filterRole ? 'No users match your filters' : 'No users found'}
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {filteredUsers.map((u) => (
+                    <div key={u._id} className="flex items-center justify-between py-4">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={u.avatar} alt={u.name} />
+                          <AvatarFallback>{u.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{u.name}</p>
+                            {getRoleBadge(u.role)}
+                          </div>
+                          <p className="text-sm text-zinc-500">{u.email}</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingUser(u)}
+                      >
+                        <UserCog className="mr-2 h-4 w-4" />
+                        Change Role
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {editingContent && (
@@ -785,6 +1648,243 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
                   Save Changes
                 </Button>
                 <Button variant="outline" onClick={() => setEditingContent(null)} className="flex-1">
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {editingGallery && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-lg mx-4">
+            <CardHeader>
+              <CardTitle>Edit Gallery Image</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <img src={editingGallery.imageUrl} alt={editingGallery.title} className="h-40 w-full object-cover rounded-lg" />
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Title</label>
+                <Input
+                  value={editingGallery.title}
+                  onChange={(e) => setEditingGallery({ ...editingGallery, title: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description</label>
+                <Textarea
+                  value={editingGallery.description}
+                  onChange={(e) => setEditingGallery({ ...editingGallery, description: e.target.value })}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="galleryActive"
+                  checked={editingGallery.isActive}
+                  onChange={(e) => setEditingGallery({ ...editingGallery, isActive: e.target.checked })}
+                  className="rounded"
+                />
+                <label htmlFor="galleryActive" className="text-sm">Active</label>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={handleUpdateGallery} className="flex-1">
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Save Changes
+                </Button>
+                <Button variant="outline" onClick={() => setEditingGallery(null)} className="flex-1">
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {editingEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-lg mx-4">
+            <CardHeader>
+              <CardTitle>Edit Event</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {editingEvent.imageUrl && (
+                <img src={editingEvent.imageUrl} alt={editingEvent.title} className="h-40 w-full object-cover rounded-lg" />
+              )}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Title</label>
+                <Input
+                  value={editingEvent.title}
+                  onChange={(e) => setEditingEvent({ ...editingEvent, title: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description</label>
+                <Textarea
+                  value={editingEvent.description}
+                  onChange={(e) => setEditingEvent({ ...editingEvent, description: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Date</label>
+                  <Input
+                    type="date"
+                    value={editingEvent.date ? editingEvent.date.split('T')[0] : ''}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Location</label>
+                  <Input
+                    value={editingEvent.location}
+                    onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Registration Link</label>
+                <Input
+                  value={editingEvent.link || ''}
+                  onChange={(e) => setEditingEvent({ ...editingEvent, link: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">New Cover Image</label>
+                <input
+                  type="file"
+                  onChange={(e) => setEditingEventFile(e.target.files?.[0] || null)}
+                  className="w-full"
+                  accept="image/*"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="eventActive"
+                  checked={editingEvent.isActive}
+                  onChange={(e) => setEditingEvent({ ...editingEvent, isActive: e.target.checked })}
+                  className="rounded"
+                />
+                <label htmlFor="eventActive" className="text-sm">Active</label>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={handleUpdateEvent} disabled={isUploading} className="flex-1">
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Save Changes
+                </Button>
+                <Button variant="outline" onClick={() => { setEditingEvent(null); setEditingEventFile(null); }} className="flex-1">
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {editingPYQ && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-lg mx-4">
+            <CardHeader>
+              <CardTitle>Edit Question Paper</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Title</label>
+                <Input
+                  value={editingPYQ.title}
+                  onChange={(e) => setEditingPYQ({ ...editingPYQ, title: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Subject</label>
+                <Input
+                  value={editingPYQ.subject}
+                  onChange={(e) => setEditingPYQ({ ...editingPYQ, subject: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Year</label>
+                  <select
+                    value={editingPYQ.year}
+                    onChange={(e) => setEditingPYQ({ ...editingPYQ, year: parseInt(e.target.value) })}
+                    className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                  >
+                    {[2025, 2024, 2023, 2022, 2021, 2020].map((year) => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Exam Type</label>
+                  <select
+                    value={editingPYQ.examType}
+                    onChange={(e) => setEditingPYQ({ ...editingPYQ, examType: e.target.value })}
+                    className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                  >
+                    <option value="midterm">Mid Term</option>
+                    <option value="final">Final Exam</option>
+                    <option value="quiz">Quiz</option>
+                    <option value="assignment">Assignment</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Branch</label>
+                  <select
+                    value={editingPYQ.branch}
+                    onChange={(e) => setEditingPYQ({ ...editingPYQ, branch: e.target.value })}
+                    className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                  >
+                    <option value="cs">CS</option>
+                    <option value="it">IT</option>
+                    <option value="ece">ECE</option>
+                    <option value="ee">EE</option>
+                    <option value="me">ME</option>
+                    <option value="ce">CE</option>
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Semester</label>
+                <select
+                  value={editingPYQ.semester}
+                  onChange={(e) => setEditingPYQ({ ...editingPYQ, semester: parseInt(e.target.value) })}
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                    <option key={sem} value={sem}>Semester {sem}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description</label>
+                <Textarea
+                  value={editingPYQ.description}
+                  onChange={(e) => setEditingPYQ({ ...editingPYQ, description: e.target.value })}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="pyqActive"
+                  checked={editingPYQ.isActive}
+                  onChange={(e) => setEditingPYQ({ ...editingPYQ, isActive: e.target.checked })}
+                  className="rounded"
+                />
+                <label htmlFor="pyqActive" className="text-sm">Active</label>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={handleUpdatePYQ} disabled={isUploading} className="flex-1">
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Save Changes
+                </Button>
+                <Button variant="outline" onClick={() => setEditingPYQ(null)} className="flex-1">
                   <XCircle className="mr-2 h-4 w-4" />
                   Cancel
                 </Button>

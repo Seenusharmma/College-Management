@@ -115,7 +115,7 @@ export class UserService {
     ]);
 
     return {
-      data: data as IUser[],
+      data: data as unknown as IUser[],
       pagination: {
         page,
         limit,
