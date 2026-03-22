@@ -12,6 +12,8 @@ import { errorHandler } from './middlewares/errorHandler.js';
 
 const app = express();
 
+const PORT = process.env.PORT || 3001;
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -65,8 +67,10 @@ app.use(errorHandler);
 const startServer = async () => {
   try {
     await connectDB();
-    const mode = config.isProduction ? 'Production' : 'Development';
-    console.log(`${mode} server starting on port ${config.port}`);
+    app.listen(PORT, () => {
+      const mode = config.isProduction ? 'Production' : 'Development';
+      console.log(`${mode} server running on port ${PORT}`);
+    });
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
