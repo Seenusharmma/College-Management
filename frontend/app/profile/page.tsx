@@ -50,28 +50,28 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-3xl space-y-6 px-4 sm:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-        <p className="text-zinc-500 dark:text-zinc-400">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Profile</h1>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400 sm:text-base">
           Manage your account settings
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Avatar className="h-14 w-14 sm:h-20 sm:w-20">
                 <AvatarImage src={user?.imageUrl} alt={user?.fullName || ''} />
-                <AvatarFallback className="text-xl">
+                <AvatarFallback className="text-lg">
                   {user?.firstName?.[0]}{user?.lastName?.[0]}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <CardTitle className="text-2xl">{user?.fullName}</CardTitle>
-                <CardDescription className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
+                <CardTitle className="text-lg sm:text-2xl">{user?.fullName}</CardTitle>
+                <CardDescription className="flex items-center gap-2 text-xs sm:text-sm">
+                  <Mail className="h-3 w-3 sm:h-4 sm:w-4" />
                   {user?.emailAddresses[0]?.emailAddress}
                 </CardDescription>
                 <Badge className={`${roleColors[storedUser?.role || 'student']} mt-2 text-white`}>
@@ -79,15 +79,15 @@ export default function ProfilePage() {
                 </Badge>
               </div>
             </div>
-            <Button variant="outline" onClick={() => setIsEditing(!isEditing)}>
+            <Button variant="outline" onClick={() => setIsEditing(!isEditing)} className="w-full sm:w-auto">
               {isEditing ? 'Cancel' : 'Edit Profile'}
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-6 sm:grid-cols-2">
+        <CardContent className="space-y-4 sm:space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
             <div className="space-y-2">
-              <Label htmlFor="name" className="flex items-center gap-2">
+              <Label htmlFor="name" className="flex items-center gap-2 text-sm">
                 <User className="h-4 w-4" />
                 Full Name
               </Label>
@@ -100,7 +100,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="flex items-center gap-2">
+              <Label className="flex items-center gap-2 text-sm">
                 <BookOpen className="h-4 w-4" />
                 Branch
               </Label>
@@ -122,8 +122,8 @@ export default function ProfilePage() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
+            <div className="space-y-2 sm:col-span-2">
+              <Label className="flex items-center gap-2 text-sm">
                 <Calendar className="h-4 w-4" />
                 Semester
               </Label>
@@ -132,7 +132,7 @@ export default function ProfilePage() {
                 onValueChange={(value) => setFormData({ ...formData, semester: value })}
                 disabled={!isEditing}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full sm:max-w-xs">
                   <SelectValue placeholder="Select semester" />
                 </SelectTrigger>
                 <SelectContent>
@@ -147,7 +147,7 @@ export default function ProfilePage() {
           </div>
 
           {isEditing && (
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
               <Button onClick={handleSave} className="flex-1">
                 Save Changes
               </Button>
@@ -161,21 +161,21 @@ export default function ProfilePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Account Information</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Account Information</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between py-2 border-b">
-              <span className="text-zinc-500 dark:text-zinc-400">User ID</span>
-              <span className="font-mono text-sm">{storedUser?.clerkUserId || user?.id}</span>
+          <div className="space-y-3">
+            <div className="flex justify-between gap-2 py-2 border-b">
+              <span className="text-sm text-zinc-500 dark:text-zinc-400">User ID</span>
+              <span className="font-mono text-xs sm:text-sm break-all">{storedUser?.clerkUserId || user?.id}</span>
             </div>
-            <div className="flex justify-between py-2 border-b">
-              <span className="text-zinc-500 dark:text-zinc-400">Role</span>
-              <span className="capitalize">{(storedUser?.role || 'student').replace('_', ' ')}</span>
+            <div className="flex justify-between gap-2 py-2 border-b">
+              <span className="text-sm text-zinc-500 dark:text-zinc-400">Role</span>
+              <span className="text-sm capitalize">{(storedUser?.role || 'student').replace('_', ' ')}</span>
             </div>
-            <div className="flex justify-between py-2">
-              <span className="text-zinc-500 dark:text-zinc-400">Member Since</span>
-              <span>{new Date().toLocaleDateString()}</span>
+            <div className="flex justify-between gap-2 py-2">
+              <span className="text-sm text-zinc-500 dark:text-zinc-400">Member Since</span>
+              <span className="text-sm">{new Date().toLocaleDateString()}</span>
             </div>
           </div>
         </CardContent>

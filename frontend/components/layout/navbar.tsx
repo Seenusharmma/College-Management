@@ -27,7 +27,7 @@ import { SignOutButton, useUser } from '@clerk/nextjs';
 import { isAdminEmail } from '@/lib/admin-config';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
   { href: '/notes', label: 'Notes', icon: BookOpen },
   { href: '/assignments', label: 'Assignments', icon: FileText },
   { href: '/previous-year-questions', label: 'PYQ', icon: ClipboardList },
@@ -63,7 +63,7 @@ export function Navbar() {
             <Link href="/dashboard" className="flex items-center gap-2">
               <GraduationCap className="h-8 w-8 text-zinc-900 dark:text-zinc-50" />
               <span className="hidden font-bold text-zinc-900 dark:text-zinc-50 sm:inline">
-                AcademicHub
+                CVRP
               </span>
             </Link>
             
@@ -124,8 +124,19 @@ export function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-zinc-200 p-4 md:hidden dark:border-zinc-800">
-          <div className="flex flex-col gap-2">
+        <div className="border-t border-zinc-200 p-3 md:hidden dark:border-zinc-800">
+          <div className="mb-3 flex items-center gap-3 border-b border-zinc-200 pb-3 dark:border-zinc-800">
+            <Avatar className="h-9 w-9">
+              <AvatarImage src={userAvatar} alt={userName} />
+              <AvatarFallback>
+                {userName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium dark:text-zinc-50">
+              {userName}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
             {filteredNavItems.map((item) => (
               <Link
                 key={item.href}

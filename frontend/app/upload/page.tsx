@@ -162,27 +162,27 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Upload Content</h1>
-        <p className="text-zinc-500 dark:text-zinc-400">
+    <div className="mx-auto max-w-2xl px-4">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Upload Content</h1>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400 sm:text-base">
           Share notes, assignments, PYQs, and more with your college
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Content Details</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-lg sm:text-xl">Content Details</CardTitle>
+          <CardDescription className="text-sm">
             Fill in the details and upload your file
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div className="space-y-2">
               <Label htmlFor="file">File</Label>
               <div
-                className={`relative flex items-center gap-4 ${
+                className={`relative ${
                   dragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
                 }`}
                 onDragEnter={handleDrag}
@@ -192,12 +192,12 @@ export default function UploadPage() {
               >
                 <label
                   htmlFor="file-upload"
-                  className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-zinc-300 bg-zinc-50 transition-colors hover:border-zinc-400 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
+                  className="flex h-24 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-zinc-300 bg-zinc-50 transition-colors hover:border-zinc-400 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 sm:h-32"
                 >
                   {file ? (
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col items-center px-2">
                       {getFileIcon()}
-                      <span className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                      <span className="mt-1 text-xs text-zinc-600 dark:text-zinc-400 sm:mt-2 sm:text-sm">
                         {file.name.length > 30 ? file.name.substring(0, 30) + '...' : file.name}
                       </span>
                       <span className="text-xs text-zinc-400">
@@ -205,9 +205,9 @@ export default function UploadPage() {
                       </span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center">
-                      <Upload className="mb-2 h-8 w-8 text-zinc-400" />
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                    <div className="flex flex-col items-center px-2">
+                      <Upload className="mb-1 h-6 w-6 text-zinc-400 sm:mb-2 sm:h-8 sm:w-8" />
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400 sm:text-sm">
                         Click to upload or drag and drop
                       </span>
                       <span className="text-xs text-zinc-400">
@@ -229,7 +229,7 @@ export default function UploadPage() {
                     variant="outline"
                     size="icon"
                     onClick={() => setFile(null)}
-                    className="shrink-0"
+                    className="absolute right-2 top-2"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -259,7 +259,7 @@ export default function UploadPage() {
               />
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
               <div className="space-y-2">
                 <Label>Type *</Label>
                 <Select
@@ -343,7 +343,7 @@ export default function UploadPage() {
               <p className="text-xs text-zinc-500">Separate tags with commas</p>
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
               <Button
                 type="button"
                 variant="outline"

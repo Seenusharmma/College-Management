@@ -77,10 +77,10 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 px-4 sm:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Search Content</h1>
-        <p className="text-zinc-500 dark:text-zinc-400">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Search Content</h1>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400 sm:text-base">
           Find notes, assignments, PYQs, events, and jobs
         </p>
       </div>
@@ -95,8 +95,8 @@ export default function SearchPage() {
       </Card>
 
       <div>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-base font-semibold sm:text-lg">
             Results ({filteredContents.length})
           </h2>
         </div>
