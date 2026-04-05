@@ -13,12 +13,14 @@ import {
 } from 'recharts';
 import { 
   Users, FileText, Download, Eye, Upload, Trash2, Edit2, 
-  BarChart3, CheckCircle, XCircle, TrendingUp, Calendar, Shield, UserCog, Image, X, Link as LinkIcon, BookOpen
+  BarChart3, CheckCircle, XCircle, TrendingUp, Calendar, Shield, UserCog, Image, X, Link as LinkIcon, BookOpen, Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { downloadFile } from '@/lib/download-file';
 import { Content, CONTENT_TYPES, BRANCHES, SEMESTERS } from '@/types';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface Stats {
   totalContent: number;
@@ -126,10 +128,10 @@ interface UserData {
 const COLORS = ['#3b82f6', '#22c55e', '#a855f7', '#f97316', '#ef4444', '#06b6d4'];
 
 const ROLES = [
-  { value: 'student', label: 'Student', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400' },
-  { value: 'teacher', label: 'Teacher', color: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' },
-  { value: 'admin', label: 'Admin', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400' },
-  { value: 'super_admin', label: 'Super Admin', color: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' }
+  { value: 'student', label: 'Student', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20' },
+  { value: 'teacher', label: 'Teacher', color: 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20' },
+  { value: 'admin', label: 'Admin', color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20' },
+  { value: 'super_admin', label: 'Super Admin', color: 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20' }
 ];
 
 interface AdminClientProps {
@@ -729,680 +731,1225 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
   const getRoleBadge = (role: string) => {
     const roleData = ROLES.find(r => r.value === role);
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${roleData?.color || ''}`}>
+      <span className={cn("px-2.5 py-1 rounded-lg text-xs font-semibold", roleData?.color || '')}>
         {roleData?.label || role}
       </span>
     );
   };
 
+  const tabs = [
+    { id: 'overview' as const, label: 'Overview', icon: BarChart3 },
+    { id: 'content' as const, label: 'Content', icon: FileText },
+    { id: 'upload' as const, label: 'Upload', icon: Upload },
+    { id: 'gallery' as const, label: 'Gallery', icon: Image },
+    { id: 'events' as const, label: 'Events', icon: Calendar },
+    { id: 'pyq' as const, label: 'PYQ', icon: BookOpen },
+    { id: 'users' as const, label: 'Users', icon: UserCog },
+  ];
+
+  const statCards = [
+    { label: 'Total Content', value: stats?.totalContent || contents.length, icon: FileText, gradient: 'from-blue-500 to-cyan-500', bgGradient: 'from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30' },
+    { label: 'Total Users', value: stats?.totalStudents || users.length, icon: Users, gradient: 'from-purple-500 to-pink-500', bgGradient: 'from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30' },
+    { label: 'Downloads', value: stats?.totalDownloads || 0, icon: Download, gradient: 'from-emerald-500 to-teal-500', bgGradient: 'from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30' },
+    { label: 'Total Views', value: stats?.totalViews || 0, icon: Eye, gradient: 'from-amber-500 to-orange-500', bgGradient: 'from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30' }
+  ];
+
   if (!isSuperAdmin) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <XCircle className="h-16 w-16 text-red-500 mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-            <p className="text-zinc-500 mb-6">
+      <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-indigo-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950/20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div className="max-w-md mx-auto py-16">
+          <Card className="p-8 text-center border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+            <div className="h-16 w-16 rounded-3xl bg-gradient-to-br from-rose-100 to-red-100 dark:from-rose-950/30 dark:to-red-950/30 flex items-center justify-center mx-auto mb-6">
+              <XCircle className="h-8 w-8 text-rose-500" />
+            </div>
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">Access Denied</h3>
+            <p className="text-zinc-500 dark:text-zinc-400 mb-6">
               You need super admin privileges to access this page.
             </p>
             <Link href="/dashboard">
-              <Button>Go to Dashboard</Button>
+              <Button className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500">
+                Go to Dashboard
+              </Button>
             </Link>
-          </CardContent>
-        </Card>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-          <p className="text-zinc-500 dark:text-zinc-400">
-            Manage content, users, and monitor platform activity
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Badge variant="outline" className="text-sm">
-            {userEmail}
-          </Badge>
-          <Badge variant="destructive">Super Admin</Badge>
-        </div>
-      </div>
-
-      <div className="flex gap-2 border-b overflow-x-auto">
-        {(['overview', 'content', 'upload', 'gallery', 'events', 'pyq', 'users'] as const).map((tab) => (
-          <Button
-            key={tab}
-            variant={activeTab === tab ? 'default' : 'ghost'}
-            onClick={() => setActiveTab(tab)}
-            className="rounded-b-none whitespace-nowrap"
-          >
-            {tab === 'overview' && <BarChart3 className="mr-2 h-4 w-4" />}
-            {tab === 'content' && <FileText className="mr-2 h-4 w-4" />}
-            {tab === 'upload' && <Upload className="mr-2 h-4 w-4" />}
-            {tab === 'gallery' && <Image className="mr-2 h-4 w-4" />}
-            {tab === 'events' && <Calendar className="mr-2 h-4 w-4" />}
-            {tab === 'pyq' && <BookOpen className="mr-2 h-4 w-4" />}
-            {tab === 'users' && <UserCog className="mr-2 h-4 w-4" />}
-            {tab === 'pyq' ? 'PYQ' : tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </Button>
-        ))}
-      </div>
-
-      {activeTab === 'overview' && (
-        <div className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900/20">
-                    <FileText className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stats?.totalContent || contents.length}</p>
-                    <p className="text-xs text-zinc-500">Total Content</p>
-                  </div>
+    <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-indigo-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950/20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="max-w-7xl mx-auto py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <Shield className="h-5 w-5 text-white" />
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/20">
-                    <Users className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stats?.totalStudents || users.length}</p>
-                    <p className="text-xs text-zinc-500">Total Users</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="rounded-full bg-purple-100 p-3 dark:bg-purple-900/20">
-                    <Download className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stats?.totalDownloads || 0}</p>
-                    <p className="text-xs text-zinc-500">Total Downloads</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                  <div className="rounded-full bg-orange-100 p-3 dark:bg-orange-900/20">
-                    <Eye className="h-6 w-6 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stats?.totalViews || 0}</p>
-                    <p className="text-xs text-zinc-500">Total Views</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight bg-gradient-to-r from-zinc-900 to-zinc-700 dark:from-zinc-50 dark:to-zinc-300 bg-clip-text text-transparent">
+                  Admin Dashboard
+                </h1>
+              </div>
+              <p className="text-zinc-500 dark:text-zinc-400 text-base">
+                Manage content, users, and monitor platform activity
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="rounded-lg text-sm font-medium">
+                {userEmail}
+              </Badge>
+              <Badge className="rounded-lg text-sm font-medium bg-gradient-to-r from-rose-500 to-red-500 text-white">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Super Admin
+              </Badge>
+            </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Content by Type
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats?.contentByType || []}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Users by Role
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: 'Students', value: users.filter(u => u.role === 'student').length },
-                          { name: 'Teachers', value: users.filter(u => u.role === 'teacher').length },
-                          { name: 'Admins', value: users.filter(u => u.role === 'admin').length },
-                          { name: 'Super Admins', value: users.filter(u => u.role === 'super_admin').length }
-                        ]}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
-                      >
-                        {[0, 1, 2, 3].map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'content' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Manage Content</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-4">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="h-20 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-                ))}
-              </div>
-            ) : contents.length === 0 ? (
-              <div className="py-12 text-center">
-                <FileText className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
-                <p className="text-zinc-500">No content uploaded yet</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {contents.map((content) => (
-                  <div
-                    key={content._id}
-                    className="flex items-center justify-between rounded-lg border p-4"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold">{content.title}</h3>
-                        <Badge variant="outline">{content.type}</Badge>
-                        <Badge variant={content.isActive ? 'default' : 'secondary'}>
-                          {content.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-zinc-500">
-                        {content.branch} | Sem {content.semester} | {content.subject}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(content)}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditingContent(content)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDelete(content._id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {activeTab === 'upload' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Upload New Content</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUpload} className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Title *</label>
-                  <Input
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Enter content title"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Subject *</label>
-                  <Input
-                    value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    placeholder="e.g., Database Systems"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Description *</label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Enter content description"
-                  rows={3}
-                  required
-                />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Type *</label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
-                  >
-                    {CONTENT_TYPES.map((type) => (
-                      <option key={type.id} value={type.id}>{type.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Branch *</label>
-                  <select
-                    value={formData.branch}
-                    onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-                    className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
-                  >
-                    {BRANCHES.map((branch) => (
-                      <option key={branch.id} value={branch.id}>{branch.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Semester *</label>
-                  <select
-                    value={formData.semester}
-                    onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
-                    className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
-                  >
-                    {SEMESTERS.map((sem) => (
-                      <option key={sem.id} value={sem.id}>{sem.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Tags</label>
-                <Input
-                  value={formData.tags}
-                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                  placeholder="Enter tags separated by commas"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">File *</label>
-                <input
-                  type="file"
-                  onChange={(e) => setFormData({ ...formData, file: e.target.files?.[0] || null })}
-                  className="w-full"
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
-                  required
-                />
-              </div>
-
-              <Button type="submit" disabled={isUploading} className="w-full">
-                {isUploading ? 'Uploading...' : 'Upload Content'}
+          <div className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+            {tabs.map((tab) => (
+              <Button
+                key={tab.id}
+                variant={activeTab === tab.id ? 'default' : 'outline'}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "rounded-xl whitespace-nowrap font-medium transition-all duration-200",
+                  activeTab === tab.id && [
+                    "bg-gradient-to-r from-indigo-500 to-purple-500",
+                    "hover:from-indigo-600 hover:to-purple-600",
+                    "text-white shadow-lg shadow-indigo-500/25"
+                  ],
+                  activeTab !== tab.id && [
+                    "border-zinc-200 dark:border-zinc-700",
+                    "hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  ]
+                )}
+              >
+                <tab.icon className="h-4 w-4 mr-2" />
+                {tab.label}
               </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+            ))}
+          </div>
 
-      {activeTab === 'gallery' && (
-        <div className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Upload Gallery Image</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleGalleryUpload} className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Title *</label>
-                    <Input
-                      value={galleryFormData.title}
-                      onChange={(e) => setGalleryFormData({ ...galleryFormData, title: e.target.value })}
-                      placeholder="Enter image title"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Description</label>
-                    <Textarea
-                      value={galleryFormData.description}
-                      onChange={(e) => setGalleryFormData({ ...galleryFormData, description: e.target.value })}
-                      placeholder="Enter image description"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Image *</label>
-                    <input
-                      type="file"
-                      onChange={handleGalleryFileChange}
-                      className="w-full"
-                      accept="image/*"
-                      required
-                    />
-                    {previewImage && (
-                      <div className="relative mt-2">
-                        <img src={previewImage} alt="Preview" className="h-40 w-full object-cover rounded-lg" />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute -right-2 -top-2 h-6 w-6"
-                          onClick={() => {
-                            setPreviewImage(null);
-                            setGalleryFormData({ ...galleryFormData, file: null });
-                          }}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {statCards.map((stat, index) => (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <Card className={cn(
+                      "relative overflow-hidden p-5",
+                      "border-zinc-200/50 dark:border-zinc-800/50",
+                      "bg-white/80 dark:bg-zinc-900/80",
+                      "backdrop-blur-sm",
+                      "hover:shadow-lg hover:shadow-zinc-950/5",
+                      "transition-all duration-300"
+                    )}>
+                      <div className={cn(
+                        "absolute inset-0 opacity-50",
+                        `bg-gradient-to-br ${stat.bgGradient}`
+                      )} />
+                      <div className="relative flex items-center gap-4">
+                        <div className={cn(
+                          "flex-shrink-0 h-12 w-12 rounded-xl",
+                          "bg-gradient-to-br shadow-sm",
+                          stat.gradient
+                        )}>
+                          <stat.icon className="h-6 w-6 text-white m-3" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                            {stat.value}
+                          </p>
+                          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+                            {stat.label}
+                          </p>
+                        </div>
                       </div>
-                    )}
-                  </div>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
 
-                  <Button type="submit" disabled={isUploading} className="w-full">
-                    {isUploading ? 'Uploading...' : 'Upload Image'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+              <div className="grid gap-6 lg:grid-cols-2">
+                <Card className="border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                        <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      Content by Type
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={stats?.contentByType || []}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="count" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            <Card>
+                <Card className="border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                        <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      Users by Role
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: 'Students', value: users.filter(u => u.role === 'student').length },
+                              { name: 'Teachers', value: users.filter(u => u.role === 'teacher').length },
+                              { name: 'Admins', value: users.filter(u => u.role === 'admin').length },
+                              { name: 'Super Admins', value: users.filter(u => u.role === 'super_admin').length }
+                            ]}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={100}
+                            label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                          >
+                            {[0, 1, 2, 3].map((_, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'content' && (
+            <Card className="border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>Gallery Images ({galleryItems.length})</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                    <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  Manage Content
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                {galleryItems.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <Image className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
-                    <p className="text-zinc-500">No gallery images yet</p>
+                {isLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="h-20 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
+                    ))}
+                  </div>
+                ) : contents.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <div className="h-16 w-16 rounded-3xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+                      <FileText className="h-8 w-8 text-zinc-400" />
+                    </div>
+                    <p className="text-zinc-500">No content uploaded yet</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto">
-                    {galleryItems.map((item) => (
-                      <div key={item._id} className="relative group">
-                        <img
-                          src={item.imageUrl}
-                          alt={item.title}
-                          className="h-32 w-full object-cover rounded-lg"
-                        />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                  <div className="space-y-3">
+                    {contents.map((content) => (
+                      <motion.div
+                        key={content._id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={cn(
+                          "flex items-center justify-between rounded-xl border p-4",
+                          "border-zinc-200/50 dark:border-zinc-800/50",
+                          "bg-zinc-50/50 dark:bg-zinc-800/30",
+                          "hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50",
+                          "transition-all duration-200"
+                        )}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">{content.title}</h3>
+                            <Badge variant="outline" className="rounded-lg">{content.type}</Badge>
+                            <Badge 
+                              variant={content.isActive ? "default" : "secondary"}
+                              className={cn(
+                                "rounded-lg",
+                                content.isActive && "bg-emerald-500 text-white"
+                              )}
+                            >
+                              {content.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                            {content.branch} | Sem {content.semester} | {content.subject}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
                           <Button
-                            variant="secondary"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setEditingGallery(item)}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownload(content)}
+                            className="rounded-lg"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingContent(content)}
+                            className="rounded-lg"
                           >
                             <Edit2 className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="destructive"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleDeleteGallery(item._id)}
+                            size="sm"
+                            onClick={() => handleDelete(content._id)}
+                            className="rounded-lg"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                        <p className="text-xs truncate mt-1">{item.title}</p>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 )}
               </CardContent>
             </Card>
-          </div>
-        </div>
-      )}
+          )}
 
-      {activeTab === 'events' && (
-        <div className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
+          {activeTab === 'upload' && (
+            <Card className="border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>Create New Event</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                    <Upload className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  Upload New Content
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleEventUpload} className="space-y-4">
+                <form onSubmit={handleUpload} className="space-y-5">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Title *</label>
+                      <Input
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        placeholder="Enter content title"
+                        required
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Subject *</label>
+                      <Input
+                        value={formData.subject}
+                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                        placeholder="e.g., Database Systems"
+                        required
+                        className="rounded-xl"
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Title *</label>
+                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Description *</label>
+                    <Textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Enter content description"
+                      rows={3}
+                      required
+                      className="rounded-xl resize-none"
+                    />
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Type *</label>
+                      <select
+                        value={formData.type}
+                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                        className="w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 text-sm"
+                      >
+                        {CONTENT_TYPES.map((type) => (
+                          <option key={type.id} value={type.id}>{type.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Branch *</label>
+                      <select
+                        value={formData.branch}
+                        onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                        className="w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 text-sm"
+                      >
+                        {BRANCHES.map((branch) => (
+                          <option key={branch.id} value={branch.id}>{branch.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Semester *</label>
+                      <select
+                        value={formData.semester}
+                        onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
+                        className="w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 text-sm"
+                      >
+                        {SEMESTERS.map((sem) => (
+                          <option key={sem.id} value={sem.id}>{sem.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Tags</label>
                     <Input
-                      value={eventFormData.title}
-                      onChange={(e) => setEventFormData({ ...eventFormData, title: e.target.value })}
-                      placeholder="Enter event title"
+                      value={formData.tags}
+                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                      placeholder="Enter tags separated by commas"
+                      className="rounded-xl"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">File *</label>
+                    <input
+                      type="file"
+                      onChange={(e) => setFormData({ ...formData, file: e.target.files?.[0] || null })}
+                      className="w-full"
+                      accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
                       required
                     />
                   </div>
 
+                  <Button type="submit" disabled={isUploading} className="w-full rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-lg shadow-indigo-500/25">
+                    {isUploading ? 'Uploading...' : 'Upload Content'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === 'gallery' && (
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card className="border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                      <Image className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    Upload Gallery Image
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleGalleryUpload} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Title *</label>
+                      <Input
+                        value={galleryFormData.title}
+                        onChange={(e) => setGalleryFormData({ ...galleryFormData, title: e.target.value })}
+                        placeholder="Enter image title"
+                        required
+                        className="rounded-xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Description</label>
+                      <Textarea
+                        value={galleryFormData.description}
+                        onChange={(e) => setGalleryFormData({ ...galleryFormData, description: e.target.value })}
+                        placeholder="Enter image description"
+                        rows={3}
+                        className="rounded-xl resize-none"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Image *</label>
+                      <input
+                        type="file"
+                        onChange={handleGalleryFileChange}
+                        className="w-full"
+                        accept="image/*"
+                        required
+                      />
+                      {previewImage && (
+                        <div className="relative mt-2">
+                          <img src={previewImage} alt="Preview" className="h-40 w-full object-cover rounded-xl" />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute -right-2 -top-2 h-6 w-6 rounded-full"
+                            onClick={() => {
+                              setPreviewImage(null);
+                              setGalleryFormData({ ...galleryFormData, file: null });
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button type="submit" disabled={isUploading} className="w-full rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg shadow-purple-500/25">
+                      {isUploading ? 'Uploading...' : 'Upload Image'}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card className="border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
+                      <Image className="h-4 w-4 text-pink-600 dark:text-pink-400" />
+                    </div>
+                    Gallery Images ({galleryItems.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {galleryItems.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <div className="h-12 w-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+                        <Image className="h-6 w-6 text-zinc-400" />
+                      </div>
+                      <p className="text-zinc-500">No gallery images yet</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3 max-h-[400px] overflow-y-auto">
+                      {galleryItems.map((item) => (
+                        <div key={item._id} className="relative group rounded-xl overflow-hidden">
+                          <img
+                            src={item.imageUrl}
+                            alt={item.title}
+                            className="h-32 w-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center gap-2">
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              className="h-8 w-8 rounded-lg"
+                              onClick={() => setEditingGallery(item)}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="h-8 w-8 rounded-lg"
+                              onClick={() => handleDeleteGallery(item._id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <p className="text-xs truncate mt-1 px-1">{item.title}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {activeTab === 'events' && (
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card className="border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                      <Calendar className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    Create New Event
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleEventUpload} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Title *</label>
+                      <Input
+                        value={eventFormData.title}
+                        onChange={(e) => setEventFormData({ ...eventFormData, title: e.target.value })}
+                        placeholder="Enter event title"
+                        required
+                        className="rounded-xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Description</label>
+                      <Textarea
+                        value={eventFormData.description}
+                        onChange={(e) => setEventFormData({ ...eventFormData, description: e.target.value })}
+                        placeholder="Enter event description"
+                        rows={3}
+                        className="rounded-xl resize-none"
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Date *</label>
+                        <Input
+                          type="date"
+                          value={eventFormData.date}
+                          onChange={(e) => setEventFormData({ ...eventFormData, date: e.target.value })}
+                          required
+                          className="rounded-xl"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Location</label>
+                        <Input
+                          value={eventFormData.location}
+                          onChange={(e) => setEventFormData({ ...eventFormData, location: e.target.value })}
+                          placeholder="Event location"
+                          className="rounded-xl"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Registration Link</label>
+                      <Input
+                        value={eventFormData.link}
+                        onChange={(e) => setEventFormData({ ...eventFormData, link: e.target.value })}
+                        placeholder="https://..."
+                        className="rounded-xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Cover Image</label>
+                      <input
+                        type="file"
+                        onChange={handleEventFileChange}
+                        className="w-full"
+                        accept="image/*"
+                      />
+                      {previewEventImage && (
+                        <div className="relative mt-2">
+                          <img src={previewEventImage} alt="Preview" className="h-40 w-full object-cover rounded-xl" />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute -right-2 -top-2 h-6 w-6 rounded-full"
+                            onClick={() => {
+                              setPreviewEventImage(null);
+                              setEventFormData({ ...eventFormData, file: null });
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button type="submit" disabled={isUploading} className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/25">
+                      {isUploading ? 'Creating...' : 'Create Event'}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card className="border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
+                      <Calendar className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                    </div>
+                    Events ({events.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {events.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <div className="h-12 w-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+                        <Calendar className="h-6 w-6 text-zinc-400" />
+                      </div>
+                      <p className="text-zinc-500">No events created yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                      {events.map((event) => (
+                        <div key={event._id} className="border rounded-xl p-4 border-zinc-200/50 dark:border-zinc-800/50">
+                          <div className="flex gap-4">
+                            {event.imageUrl && (
+                              <img
+                                src={event.imageUrl}
+                                alt={event.title}
+                                className="h-20 w-32 object-cover rounded-lg"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">{event.title}</h3>
+                                  <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-1">{event.description}</p>
+                                </div>
+                                <div className="flex gap-1">
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-lg"
+                                    onClick={() => setEditingEvent(event)}
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-lg"
+                                    onClick={() => handleDeleteEvent(event._id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="flex gap-4 mt-2 text-xs text-zinc-500">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {new Date(event.date).toLocaleDateString()}
+                                </span>
+                                {event.location && <span>{event.location}</span>}
+                                {event.link && (
+                                  <a
+                                    href={event.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-blue-500 hover:underline"
+                                  >
+                                    <LinkIcon className="h-3 w-3" />
+                                    Link
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {activeTab === 'pyq' && (
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card className="border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+                      <BookOpen className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                    </div>
+                    Upload Question Paper
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handlePYQUpload} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Title *</label>
+                      <Input
+                        value={pyqFormData.title}
+                        onChange={(e) => setPyqFormData({ ...pyqFormData, title: e.target.value })}
+                        placeholder="e.g., Database Systems - Final Exam 2024"
+                        required
+                        className="rounded-xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Subject *</label>
+                      <Input
+                        value={pyqFormData.subject}
+                        onChange={(e) => setPyqFormData({ ...pyqFormData, subject: e.target.value })}
+                        placeholder="e.g., Database Systems"
+                        required
+                        className="rounded-xl"
+                      />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Year *</label>
+                        <select
+                          value={pyqFormData.year}
+                          onChange={(e) => setPyqFormData({ ...pyqFormData, year: e.target.value })}
+                          className="w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 text-sm"
+                        >
+                          {[2025, 2024, 2023, 2022, 2021, 2020].map((year) => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Exam Type *</label>
+                        <select
+                          value={pyqFormData.examType}
+                          onChange={(e) => setPyqFormData({ ...pyqFormData, examType: e.target.value })}
+                          className="w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 text-sm"
+                        >
+                          <option value="midterm">Mid Term</option>
+                          <option value="final">Final Exam</option>
+                          <option value="quiz">Quiz</option>
+                          <option value="assignment">Assignment</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Branch *</label>
+                        <select
+                          value={pyqFormData.branch}
+                          onChange={(e) => setPyqFormData({ ...pyqFormData, branch: e.target.value })}
+                          className="w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 text-sm"
+                        >
+                          <option value="cs">Computer Science</option>
+                          <option value="it">Information Technology</option>
+                          <option value="ece">Electronics & Comm</option>
+                          <option value="ee">Electrical</option>
+                          <option value="me">Mechanical</option>
+                          <option value="ce">Civil</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Semester *</label>
+                        <select
+                          value={pyqFormData.semester}
+                          onChange={(e) => setPyqFormData({ ...pyqFormData, semester: e.target.value })}
+                          className="w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 text-sm"
+                        >
+                          {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                            <option key={sem} value={sem}>Semester {sem}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Description</label>
+                      <Textarea
+                        value={pyqFormData.description}
+                        onChange={(e) => setPyqFormData({ ...pyqFormData, description: e.target.value })}
+                        placeholder="Optional description"
+                        rows={2}
+                        className="rounded-xl resize-none"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">PDF File *</label>
+                      <input
+                        type="file"
+                        onChange={(e) => setPyqFormData({ ...pyqFormData, file: e.target.files?.[0] || null })}
+                        className="w-full"
+                        accept=".pdf"
+                        required
+                      />
+                    </div>
+
+                    <Button type="submit" disabled={isUploading} className="w-full rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white shadow-lg shadow-violet-500/25">
+                      {isUploading ? 'Uploading...' : 'Upload Question Paper'}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card className="border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                      <BookOpen className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    Question Papers ({pyqs.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {pyqs.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <div className="h-12 w-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+                        <BookOpen className="h-6 w-6 text-zinc-400" />
+                      </div>
+                      <p className="text-zinc-500">No question papers uploaded yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                      {pyqs.map((pyq) => (
+                        <div key={pyq._id} className="flex items-center justify-between rounded-xl border p-3 border-zinc-200/50 dark:border-zinc-800/50">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge variant="outline" className="rounded-lg text-xs">{pyq.examType}</Badge>
+                              <Badge variant="secondary" className="rounded-lg text-xs">{pyq.year}</Badge>
+                            </div>
+                            <p className="font-medium truncate text-zinc-900 dark:text-zinc-100">{pyq.title}</p>
+                            <p className="text-sm text-zinc-500 truncate">{pyq.subject} | Sem {pyq.semester}</p>
+                          </div>
+                          <div className="flex items-center gap-1 ml-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 rounded-lg"
+                              onClick={() => setEditingPYQ(pyq)}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="h-8 w-8 rounded-lg"
+                              onClick={() => handleDeletePYQ(pyq._id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {activeTab === 'users' && (
+            <Card className="border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                    <Shield className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  User Management
+                </CardTitle>
+                <p className="text-sm text-zinc-500">Manage user roles and permissions</p>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                  <Input
+                    placeholder="Search by name or email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="max-w-xs rounded-xl"
+                  />
+                  <select
+                    value={filterRole}
+                    onChange={(e) => setFilterRole(e.target.value)}
+                    className="h-11 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 text-sm"
+                  >
+                    <option value="">All Roles</option>
+                    {ROLES.map((role) => (
+                      <option key={role.value} value={role.value}>{role.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-4">
+                  {filteredUsers.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <div className="h-12 w-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+                        <Users className="h-6 w-6 text-zinc-400" />
+                      </div>
+                      <p className="text-zinc-500">
+                        {searchQuery || filterRole ? 'No users match your filters' : 'No users found'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {filteredUsers.map((u) => (
+                        <div key={u._id} className="flex items-center justify-between rounded-xl border p-4 border-zinc-200/50 dark:border-zinc-800/50">
+                          <div className="flex items-center gap-4">
+                            <Avatar className="h-10 w-10 ring-2 ring-white dark:ring-zinc-950">
+                              <AvatarImage src={u.avatar} alt={u.name} />
+                              <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white text-xs font-semibold">
+                                {u.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-zinc-900 dark:text-zinc-100">{u.name}</p>
+                                {getRoleBadge(u.role)}
+                              </div>
+                              <p className="text-sm text-zinc-500">{u.email}</p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingUser(u)}
+                            className="rounded-xl"
+                          >
+                            <UserCog className="h-4 w-4 mr-2" />
+                            Change Role
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {editingContent && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <Card className="w-full max-w-lg mx-4 rounded-2xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                      <Edit2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    Edit Content
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Title</label>
+                    <Input
+                      value={editingContent.title}
+                      onChange={(e) => setEditingContent({ ...editingContent, title: e.target.value })}
+                      className="rounded-xl"
+                    />
+                  </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Description</label>
                     <Textarea
-                      value={eventFormData.description}
-                      onChange={(e) => setEventFormData({ ...eventFormData, description: e.target.value })}
-                      placeholder="Enter event description"
-                      rows={3}
+                      value={editingContent.description}
+                      onChange={(e) => setEditingContent({ ...editingContent, description: e.target.value })}
+                      className="rounded-xl resize-none"
                     />
                   </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isActive"
+                      checked={editingContent.isActive}
+                      onChange={(e) => setEditingContent({ ...editingContent, isActive: e.target.checked })}
+                      className="rounded"
+                    />
+                    <label htmlFor="isActive" className="text-sm">Active</label>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleUpdate} className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white">
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Save Changes
+                    </Button>
+                    <Button variant="outline" onClick={() => setEditingContent(null)} className="flex-1 rounded-xl">
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Cancel
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-                  <div className="grid gap-4 md:grid-cols-2">
+          {editingGallery && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <Card className="w-full max-w-lg mx-4 rounded-2xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                      <Edit2 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    Edit Gallery Image
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <img src={editingGallery.imageUrl} alt={editingGallery.title} className="h-40 w-full object-cover rounded-xl" />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Title</label>
+                    <Input
+                      value={editingGallery.title}
+                      onChange={(e) => setEditingGallery({ ...editingGallery, title: e.target.value })}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Description</label>
+                    <Textarea
+                      value={editingGallery.description}
+                      onChange={(e) => setEditingGallery({ ...editingGallery, description: e.target.value })}
+                      className="rounded-xl resize-none"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="galleryActive"
+                      checked={editingGallery.isActive}
+                      onChange={(e) => setEditingGallery({ ...editingGallery, isActive: e.target.checked })}
+                      className="rounded"
+                    />
+                    <label htmlFor="galleryActive" className="text-sm">Active</label>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleUpdateGallery} className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white">
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Save Changes
+                    </Button>
+                    <Button variant="outline" onClick={() => setEditingGallery(null)} className="flex-1 rounded-xl">
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Cancel
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {editingEvent && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <Card className="w-full max-w-lg mx-4 rounded-2xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                      <Edit2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    Edit Event
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {editingEvent.imageUrl && (
+                    <img src={editingEvent.imageUrl} alt={editingEvent.title} className="h-40 w-full object-cover rounded-xl" />
+                  )}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Title</label>
+                    <Input
+                      value={editingEvent.title}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, title: e.target.value })}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Description</label>
+                    <Textarea
+                      value={editingEvent.description}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, description: e.target.value })}
+                      className="rounded-xl resize-none"
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Date *</label>
+                      <label className="text-sm font-medium">Date</label>
                       <Input
                         type="date"
-                        value={eventFormData.date}
-                        onChange={(e) => setEventFormData({ ...eventFormData, date: e.target.value })}
-                        required
+                        value={editingEvent.date ? editingEvent.date.split('T')[0] : ''}
+                        onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })}
+                        className="rounded-xl"
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Location</label>
                       <Input
-                        value={eventFormData.location}
-                        onChange={(e) => setEventFormData({ ...eventFormData, location: e.target.value })}
-                        placeholder="Event location"
+                        value={editingEvent.location}
+                        onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value })}
+                        className="rounded-xl"
                       />
                     </div>
                   </div>
-
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Registration Link</label>
                     <Input
-                      value={eventFormData.link}
-                      onChange={(e) => setEventFormData({ ...eventFormData, link: e.target.value })}
+                      value={editingEvent.link || ''}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, link: e.target.value })}
                       placeholder="https://..."
+                      className="rounded-xl"
                     />
                   </div>
-
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Cover Image</label>
+                    <label className="text-sm font-medium">New Cover Image</label>
                     <input
                       type="file"
-                      onChange={handleEventFileChange}
+                      onChange={(e) => setEditingEventFile(e.target.files?.[0] || null)}
                       className="w-full"
                       accept="image/*"
                     />
-                    {previewEventImage && (
-                      <div className="relative mt-2">
-                        <img src={previewEventImage} alt="Preview" className="h-40 w-full object-cover rounded-lg" />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute -right-2 -top-2 h-6 w-6"
-                          onClick={() => {
-                            setPreviewEventImage(null);
-                            setEventFormData({ ...eventFormData, file: null });
-                          }}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
                   </div>
-
-                  <Button type="submit" disabled={isUploading} className="w-full">
-                    {isUploading ? 'Creating...' : 'Create Event'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Events ({events.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {events.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <Calendar className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
-                    <p className="text-zinc-500">No events created yet</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="eventActive"
+                      checked={editingEvent.isActive}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, isActive: e.target.checked })}
+                      className="rounded"
+                    />
+                    <label htmlFor="eventActive" className="text-sm">Active</label>
                   </div>
-                ) : (
-                  <div className="space-y-4 max-h-[500px] overflow-y-auto">
-                    {events.map((event) => (
-                      <div key={event._id} className="border rounded-lg p-4">
-                        <div className="flex gap-4">
-                          {event.imageUrl && (
-                            <img
-                              src={event.imageUrl}
-                              alt={event.title}
-                              className="h-20 w-32 object-cover rounded-lg"
-                            />
-                          )}
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <h3 className="font-semibold">{event.title}</h3>
-                                <p className="text-sm text-zinc-500">{event.description?.slice(0, 60)}...</p>
-                              </div>
-                              <div className="flex gap-1">
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => setEditingEvent(event)}
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => handleDeleteEvent(event._id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="flex gap-4 mt-2 text-xs text-zinc-500">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {new Date(event.date).toLocaleDateString()}
-                              </span>
-                              {event.location && (
-                                <span>{event.location}</span>
-                              )}
-                              {event.link && (
-                                <a
-                                  href={event.link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1 text-blue-500 hover:underline"
-                                >
-                                  <LinkIcon className="h-3 w-3" />
-                                  Link
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="flex gap-2">
+                    <Button onClick={handleUpdateEvent} disabled={isUploading} className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white">
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Save Changes
+                    </Button>
+                    <Button variant="outline" onClick={() => { setEditingEvent(null); setEditingEventFile(null); }} className="flex-1 rounded-xl">
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Cancel
+                    </Button>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-      {activeTab === 'pyq' && (
-        <div className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Upload Question Paper</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handlePYQUpload} className="space-y-4">
+          {editingPYQ && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <Card className="w-full max-w-lg mx-4 rounded-2xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+                      <Edit2 className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                    </div>
+                    Edit Question Paper
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Title *</label>
+                    <label className="text-sm font-medium">Title</label>
                     <Input
-                      value={pyqFormData.title}
-                      onChange={(e) => setPyqFormData({ ...pyqFormData, title: e.target.value })}
-                      placeholder="e.g., Database Systems - Final Exam 2024"
-                      required
+                      value={editingPYQ.title}
+                      onChange={(e) => setEditingPYQ({ ...editingPYQ, title: e.target.value })}
+                      className="rounded-xl"
                     />
                   </div>
-
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Subject *</label>
+                    <label className="text-sm font-medium">Subject</label>
                     <Input
-                      value={pyqFormData.subject}
-                      onChange={(e) => setPyqFormData({ ...pyqFormData, subject: e.target.value })}
-                      placeholder="e.g., Database Systems"
-                      required
+                      value={editingPYQ.subject}
+                      onChange={(e) => setEditingPYQ({ ...editingPYQ, subject: e.target.value })}
+                      className="rounded-xl"
                     />
                   </div>
-
-                  <div className="grid gap-4 md:grid-cols-3">
+                  <div className="grid gap-4 sm:grid-cols-3">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Year *</label>
+                      <label className="text-sm font-medium">Year</label>
                       <select
-                        value={pyqFormData.year}
-                        onChange={(e) => setPyqFormData({ ...pyqFormData, year: e.target.value })}
-                        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                        value={editingPYQ.year}
+                        onChange={(e) => setEditingPYQ({ ...editingPYQ, year: parseInt(e.target.value) })}
+                        className="w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 text-sm"
                       >
                         {[2025, 2024, 2023, 2022, 2021, 2020].map((year) => (
                           <option key={year} value={year}>{year}</option>
@@ -1410,11 +1957,11 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Exam Type *</label>
+                      <label className="text-sm font-medium">Exam Type</label>
                       <select
-                        value={pyqFormData.examType}
-                        onChange={(e) => setPyqFormData({ ...pyqFormData, examType: e.target.value })}
-                        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                        value={editingPYQ.examType}
+                        onChange={(e) => setEditingPYQ({ ...editingPYQ, examType: e.target.value })}
+                        className="w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 text-sm"
                       >
                         <option value="midterm">Mid Term</option>
                         <option value="final">Final Exam</option>
@@ -1423,533 +1970,129 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Branch *</label>
+                      <label className="text-sm font-medium">Branch</label>
                       <select
-                        value={pyqFormData.branch}
-                        onChange={(e) => setPyqFormData({ ...pyqFormData, branch: e.target.value })}
-                        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                        value={editingPYQ.branch}
+                        onChange={(e) => setEditingPYQ({ ...editingPYQ, branch: e.target.value })}
+                        className="w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 text-sm"
                       >
-                        <option value="cs">Computer Science</option>
-                        <option value="it">Information Technology</option>
-                        <option value="ece">Electronics & Comm</option>
-                        <option value="ee">Electrical</option>
-                        <option value="me">Mechanical</option>
-                        <option value="ce">Civil</option>
+                        <option value="cs">CS</option>
+                        <option value="it">IT</option>
+                        <option value="ece">ECE</option>
+                        <option value="ee">EE</option>
+                        <option value="me">ME</option>
+                        <option value="ce">CE</option>
                       </select>
                     </div>
                   </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Semester *</label>
-                      <select
-                        value={pyqFormData.semester}
-                        onChange={(e) => setPyqFormData({ ...pyqFormData, semester: e.target.value })}
-                        className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
-                      >
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
-                          <option key={sem} value={sem}>Semester {sem}</option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Semester</label>
+                    <select
+                      value={editingPYQ.semester}
+                      onChange={(e) => setEditingPYQ({ ...editingPYQ, semester: parseInt(e.target.value) })}
+                      className="w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 text-sm"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                        <option key={sem} value={sem}>Semester {sem}</option>
+                      ))}
+                    </select>
                   </div>
-
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Description</label>
                     <Textarea
-                      value={pyqFormData.description}
-                      onChange={(e) => setPyqFormData({ ...pyqFormData, description: e.target.value })}
-                      placeholder="Optional description"
-                      rows={2}
+                      value={editingPYQ.description}
+                      onChange={(e) => setEditingPYQ({ ...editingPYQ, description: e.target.value })}
+                      className="rounded-xl resize-none"
                     />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="pyqActive"
+                      checked={editingPYQ.isActive}
+                      onChange={(e) => setEditingPYQ({ ...editingPYQ, isActive: e.target.checked })}
+                      className="rounded"
+                    />
+                    <label htmlFor="pyqActive" className="text-sm">Active</label>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleUpdatePYQ} disabled={isUploading} className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white">
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Save Changes
+                    </Button>
+                    <Button variant="outline" onClick={() => setEditingPYQ(null)} className="flex-1 rounded-xl">
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Cancel
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {editingUser && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <Card className="w-full max-w-lg mx-4 rounded-2xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                      <UserCog className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    Change User Role
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-4 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50">
+                    <Avatar className="h-12 w-12 ring-2 ring-white dark:ring-zinc-950">
+                      <AvatarImage src={editingUser.avatar} alt={editingUser.name} />
+                      <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white text-sm font-semibold">
+                        {editingUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-zinc-900 dark:text-zinc-100">{editingUser.name}</p>
+                      <p className="text-sm text-zinc-500">{editingUser.email}</p>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">PDF File *</label>
-                    <input
-                      type="file"
-                      onChange={(e) => setPyqFormData({ ...pyqFormData, file: e.target.files?.[0] || null })}
-                      className="w-full"
-                      accept=".pdf"
-                      required
-                    />
-                  </div>
-
-                  <Button type="submit" disabled={isUploading} className="w-full">
-                    {isUploading ? 'Uploading...' : 'Upload Question Paper'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Question Papers ({pyqs.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {pyqs.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <BookOpen className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
-                    <p className="text-zinc-500">No question papers uploaded yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                    {pyqs.map((pyq) => (
-                      <div key={pyq._id} className="flex items-center justify-between rounded-lg border p-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline" className="text-xs">
-                              {pyq.examType}
-                            </Badge>
-                            <Badge variant="secondary" className="text-xs">
-                              {pyq.year}
-                            </Badge>
-                          </div>
-                          <p className="font-medium truncate">{pyq.title}</p>
-                          <p className="text-sm text-zinc-500 truncate">
-                            {pyq.subject} | Sem {pyq.semester}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1 ml-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setEditingPYQ(pyq)}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleDeletePYQ(pyq._id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'users' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              User Management
-            </CardTitle>
-            <p className="text-sm text-zinc-500">
-              Manage user roles and permissions
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4 mb-6">
-              <Input
-                placeholder="Search by name or email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-xs"
-              />
-              <select
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
-              >
-                <option value="">All Roles</option>
-                {ROLES.map((role) => (
-                  <option key={role.value} value={role.value}>{role.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-4">
-              {filteredUsers.length === 0 ? (
-                <div className="py-12 text-center">
-                  <Users className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
-                  <p className="text-zinc-500">
-                    {searchQuery || filterRole ? 'No users match your filters' : 'No users found'}
-                  </p>
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {filteredUsers.map((u) => (
-                    <div key={u._id} className="flex items-center justify-between py-4">
-                      <div className="flex items-center gap-4">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={u.avatar} alt={u.name} />
-                          <AvatarFallback>{u.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium">{u.name}</p>
-                            {getRoleBadge(u.role)}
-                          </div>
-                          <p className="text-sm text-zinc-500">{u.email}</p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditingUser(u)}
-                      >
-                        <UserCog className="mr-2 h-4 w-4" />
-                        Change Role
-                      </Button>
+                    <label className="text-sm font-medium">Select Role</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {ROLES.map((role) => (
+                        <button
+                          key={role.value}
+                          onClick={() => setEditingUser({ ...editingUser, role: role.value as UserData['role'] })}
+                          className={cn(
+                            "p-3 rounded-xl border-2 transition-all duration-200",
+                            editingUser.role === role.value 
+                              ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30" 
+                              : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                          )}
+                        >
+                          <span className={cn("px-2.5 py-1 rounded-lg text-xs font-semibold", role.color)}>
+                            {role.label}
+                          </span>
+                        </button>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button onClick={handleUpdateUserRole} className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white">
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Save Changes
+                    </Button>
+                    <Button variant="outline" onClick={() => setEditingUser(null)} className="flex-1 rounded-xl">
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Cancel
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {editingContent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-lg mx-4">
-            <CardHeader>
-              <CardTitle>Edit Content</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Title</label>
-                <Input
-                  value={editingContent.title}
-                  onChange={(e) => setEditingContent({ ...editingContent, title: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Description</label>
-                <Textarea
-                  value={editingContent.description}
-                  onChange={(e) => setEditingContent({ ...editingContent, description: e.target.value })}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={editingContent.isActive}
-                  onChange={(e) => setEditingContent({ ...editingContent, isActive: e.target.checked })}
-                  className="rounded"
-                />
-                <label htmlFor="isActive" className="text-sm">Active</label>
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={handleUpdate} className="flex-1">
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Save Changes
-                </Button>
-                <Button variant="outline" onClick={() => setEditingContent(null)} className="flex-1">
-                  <XCircle className="mr-2 h-4 w-4" />
-                  Cancel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {editingGallery && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-lg mx-4">
-            <CardHeader>
-              <CardTitle>Edit Gallery Image</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <img src={editingGallery.imageUrl} alt={editingGallery.title} className="h-40 w-full object-cover rounded-lg" />
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Title</label>
-                <Input
-                  value={editingGallery.title}
-                  onChange={(e) => setEditingGallery({ ...editingGallery, title: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Description</label>
-                <Textarea
-                  value={editingGallery.description}
-                  onChange={(e) => setEditingGallery({ ...editingGallery, description: e.target.value })}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="galleryActive"
-                  checked={editingGallery.isActive}
-                  onChange={(e) => setEditingGallery({ ...editingGallery, isActive: e.target.checked })}
-                  className="rounded"
-                />
-                <label htmlFor="galleryActive" className="text-sm">Active</label>
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={handleUpdateGallery} className="flex-1">
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Save Changes
-                </Button>
-                <Button variant="outline" onClick={() => setEditingGallery(null)} className="flex-1">
-                  <XCircle className="mr-2 h-4 w-4" />
-                  Cancel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {editingEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-lg mx-4">
-            <CardHeader>
-              <CardTitle>Edit Event</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {editingEvent.imageUrl && (
-                <img src={editingEvent.imageUrl} alt={editingEvent.title} className="h-40 w-full object-cover rounded-lg" />
-              )}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Title</label>
-                <Input
-                  value={editingEvent.title}
-                  onChange={(e) => setEditingEvent({ ...editingEvent, title: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Description</label>
-                <Textarea
-                  value={editingEvent.description}
-                  onChange={(e) => setEditingEvent({ ...editingEvent, description: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Date</label>
-                  <Input
-                    type="date"
-                    value={editingEvent.date ? editingEvent.date.split('T')[0] : ''}
-                    onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Location</label>
-                  <Input
-                    value={editingEvent.location}
-                    onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Registration Link</label>
-                <Input
-                  value={editingEvent.link || ''}
-                  onChange={(e) => setEditingEvent({ ...editingEvent, link: e.target.value })}
-                  placeholder="https://..."
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">New Cover Image</label>
-                <input
-                  type="file"
-                  onChange={(e) => setEditingEventFile(e.target.files?.[0] || null)}
-                  className="w-full"
-                  accept="image/*"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="eventActive"
-                  checked={editingEvent.isActive}
-                  onChange={(e) => setEditingEvent({ ...editingEvent, isActive: e.target.checked })}
-                  className="rounded"
-                />
-                <label htmlFor="eventActive" className="text-sm">Active</label>
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={handleUpdateEvent} disabled={isUploading} className="flex-1">
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Save Changes
-                </Button>
-                <Button variant="outline" onClick={() => { setEditingEvent(null); setEditingEventFile(null); }} className="flex-1">
-                  <XCircle className="mr-2 h-4 w-4" />
-                  Cancel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {editingPYQ && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-lg mx-4">
-            <CardHeader>
-              <CardTitle>Edit Question Paper</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Title</label>
-                <Input
-                  value={editingPYQ.title}
-                  onChange={(e) => setEditingPYQ({ ...editingPYQ, title: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Subject</label>
-                <Input
-                  value={editingPYQ.subject}
-                  onChange={(e) => setEditingPYQ({ ...editingPYQ, subject: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Year</label>
-                  <select
-                    value={editingPYQ.year}
-                    onChange={(e) => setEditingPYQ({ ...editingPYQ, year: parseInt(e.target.value) })}
-                    className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
-                  >
-                    {[2025, 2024, 2023, 2022, 2021, 2020].map((year) => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Exam Type</label>
-                  <select
-                    value={editingPYQ.examType}
-                    onChange={(e) => setEditingPYQ({ ...editingPYQ, examType: e.target.value })}
-                    className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
-                  >
-                    <option value="midterm">Mid Term</option>
-                    <option value="final">Final Exam</option>
-                    <option value="quiz">Quiz</option>
-                    <option value="assignment">Assignment</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Branch</label>
-                  <select
-                    value={editingPYQ.branch}
-                    onChange={(e) => setEditingPYQ({ ...editingPYQ, branch: e.target.value })}
-                    className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
-                  >
-                    <option value="cs">CS</option>
-                    <option value="it">IT</option>
-                    <option value="ece">ECE</option>
-                    <option value="ee">EE</option>
-                    <option value="me">ME</option>
-                    <option value="ce">CE</option>
-                  </select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Semester</label>
-                <select
-                  value={editingPYQ.semester}
-                  onChange={(e) => setEditingPYQ({ ...editingPYQ, semester: parseInt(e.target.value) })}
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
-                >
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
-                    <option key={sem} value={sem}>Semester {sem}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Description</label>
-                <Textarea
-                  value={editingPYQ.description}
-                  onChange={(e) => setEditingPYQ({ ...editingPYQ, description: e.target.value })}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="pyqActive"
-                  checked={editingPYQ.isActive}
-                  onChange={(e) => setEditingPYQ({ ...editingPYQ, isActive: e.target.checked })}
-                  className="rounded"
-                />
-                <label htmlFor="pyqActive" className="text-sm">Active</label>
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={handleUpdatePYQ} disabled={isUploading} className="flex-1">
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Save Changes
-                </Button>
-                <Button variant="outline" onClick={() => setEditingPYQ(null)} className="flex-1">
-                  <XCircle className="mr-2 h-4 w-4" />
-                  Cancel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-lg mx-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UserCog className="h-5 w-5" />
-                Change User Role
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-4 p-4 rounded-lg bg-zinc-50 dark:bg-zinc-800">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={editingUser.avatar} alt={editingUser.name} />
-                  <AvatarFallback>{editingUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium">{editingUser.name}</p>
-                  <p className="text-sm text-zinc-500">{editingUser.email}</p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Select Role</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {ROLES.map((role) => (
-                    <button
-                      key={role.value}
-                      onClick={() => setEditingUser({ ...editingUser, role: role.value as UserData['role'] })}
-                      className={`p-3 rounded-lg border-2 transition-colors ${
-                        editingUser.role === role.value 
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-                          : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
-                      }`}
-                    >
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${role.color}`}>
-                        {role.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button onClick={handleUpdateUserRole} className="flex-1">
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Save Changes
-                </Button>
-                <Button variant="outline" onClick={() => setEditingUser(null)} className="flex-1">
-                  <XCircle className="mr-2 h-4 w-4" />
-                  Cancel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+          )}
+        </motion.div>
+      </div>
     </div>
   );
 }

@@ -1,16 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
   FileText, Download, Search, Filter, Calendar, BookOpen, 
-  GraduationCap, X, ExternalLink, Clock
+  GraduationCap, X, ExternalLink, Clock, Sparkles, Layers, Award, ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { downloadFile } from '@/lib/download-file';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface PYQ {
   _id: string;
@@ -61,11 +63,11 @@ const EXAM_TYPES = [
 
 const YEARS = [2025, 2024, 2023, 2022, 2021, 2020];
 
-const EXAM_TYPE_COLORS: Record<string, string> = {
-  midterm: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  final: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-  quiz: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  assignment: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+const EXAM_TYPE_STYLES: Record<string, { bg: string; text: string; border: string; icon: string }> = {
+  midterm: { bg: 'bg-blue-50 dark:bg-blue-950/30', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800/50', icon: '📝' },
+  final: { bg: 'bg-purple-50 dark:bg-purple-950/30', text: 'text-purple-600 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-800/50', icon: '🎯' },
+  quiz: { bg: 'bg-green-50 dark:bg-green-950/30', text: 'text-green-600 dark:text-green-400', border: 'border-green-200 dark:border-green-800/50', icon: '⚡' },
+  assignment: { bg: 'bg-orange-50 dark:bg-orange-950/30', text: 'text-orange-600 dark:text-orange-400', border: 'border-orange-200 dark:border-orange-800/50', icon: '📋' }
 };
 
 const EXAM_TYPE_LABELS: Record<string, string> = {
@@ -73,16 +75,6 @@ const EXAM_TYPE_LABELS: Record<string, string> = {
   final: 'Final',
   quiz: 'Quiz',
   assignment: 'Assignment'
-};
-
-const BRANCH_LABELS: Record<string, string> = {
-  cs: 'CS',
-  it: 'IT',
-  ece: 'ECE',
-  ee: 'EE',
-  me: 'ME',
-  ce: 'CE',
-  all: 'All'
 };
 
 export default function PYQPage() {
@@ -163,340 +155,464 @@ export default function PYQPage() {
     selectedYear !== 'all'
   ].filter(Boolean).length;
 
+  const stats = [
+    { label: 'Total Papers', value: pyqs.length, icon: FileText, gradient: 'from-indigo-500 to-blue-500', bgGradient: 'from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30' },
+    { label: 'Years Covered', value: uniqueYears.length, icon: Calendar, gradient: 'from-violet-500 to-purple-500', bgGradient: 'from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30' },
+    { label: 'Subjects', value: new Set(pyqs.map(p => p.subject)).size, icon: BookOpen, gradient: 'from-emerald-500 to-teal-500', bgGradient: 'from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30' },
+    { label: 'Courses', value: new Set(pyqs.map(p => `${p.branch}-${p.semester}`)).size, icon: GraduationCap, gradient: 'from-amber-500 to-orange-500', bgGradient: 'from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30' }
+  ];
+
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Previous Year Questions</h1>
-        <p className="text-zinc-500 dark:text-zinc-400">
-          Access past exam papers for effective preparation
-        </p>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="rounded-full bg-white/20 p-3">
-                <FileText className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{pyqs.length}</p>
-                <p className="text-sm text-blue-100">Total Papers</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="rounded-full bg-white/20 p-3">
-                <Calendar className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{uniqueYears.length}</p>
-                <p className="text-sm text-purple-100">Years</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="rounded-full bg-white/20 p-3">
-                <BookOpen className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{new Set(pyqs.map(p => p.subject)).size}</p>
-                <p className="text-sm text-green-100">Subjects</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="rounded-full bg-white/20 p-3">
-                <GraduationCap className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{new Set(pyqs.map(p => `${p.branch}-${p.semester}`)).size}</p>
-                <p className="text-sm text-orange-100">Courses</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" />
-          <Input
-            placeholder="Search by subject, title, or description..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => setShowFilters(!showFilters)}
-          className="gap-2"
+    <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-indigo-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950/20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="py-8 sm:py-12"
         >
-          <Filter className="h-4 w-4" />
-          Filters
-          {activeFiltersCount > 0 && (
-            <Badge variant="secondary" className="ml-1">{activeFiltersCount}</Badge>
-          )}
-        </Button>
-      </div>
-
-      {showFilters && (
-        <Card>
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Filter Options</CardTitle>
-              {activeFiltersCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedBranch('all');
-                    setSelectedSemester('all');
-                    setSelectedExamType('all');
-                    setSelectedYear('all');
-                  }}
-                  className="text-zinc-500"
-                >
-                  Clear All
-                </Button>
-              )}
+          <div className="mb-6 sm:mb-8">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                <Layers className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight bg-gradient-to-r from-zinc-900 to-zinc-700 dark:from-zinc-50 dark:to-zinc-300 bg-clip-text text-transparent">
+                Previous Year Questions
+              </h1>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Branch</label>
-                <select
-                  value={selectedBranch}
-                  onChange={(e) => setSelectedBranch(e.target.value)}
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
-                >
-                  {BRANCHES.map((branch) => (
-                    <option key={branch.id} value={branch.id}>{branch.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Semester</label>
-                <select
-                  value={selectedSemester}
-                  onChange={(e) => setSelectedSemester(e.target.value)}
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
-                >
-                  {SEMESTERS.map((sem) => (
-                    <option key={sem.id} value={sem.id}>{sem.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Exam Type</label>
-                <select
-                  value={selectedExamType}
-                  onChange={(e) => setSelectedExamType(e.target.value)}
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
-                >
-                  {EXAM_TYPES.map((type) => (
-                    <option key={type.id} value={type.id}>{type.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Year</label>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
-                >
-                  <option value="all">All Years</option>
-                  {YEARS.map((year) => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {isLoading ? (
-        <div className="space-y-6">
-          {[...Array(3)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-6 w-32 rounded bg-zinc-200 dark:bg-zinc-800" />
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {[...Array(3)].map((_, j) => (
-                    <div key={j} className="h-32 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : filteredPYQs.length === 0 ? (
-        <Card className="py-16">
-          <CardContent className="flex flex-col items-center justify-center text-center">
-            <FileText className="mb-4 h-16 w-16 text-zinc-400" />
-            <h3 className="mb-2 text-xl font-semibold">No papers found</h3>
-            <p className="text-zinc-500 dark:text-zinc-400">
-              {activeFiltersCount > 0 || searchQuery
-                ? 'Try adjusting your filters or search query'
-                : 'Previous year questions will appear here'}
+            <p className="text-zinc-500 dark:text-zinc-400 text-sm sm:text-base">
+              Access past exam papers for effective preparation
             </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-8">
-          {uniqueYears.map((year) => (
-            <div key={year}>
-              <div className="mb-4 flex items-center gap-3">
-                <h2 className="text-xl font-bold">{year}</h2>
-                <Badge variant="secondary">{groupedByYear[year].length} papers</Badge>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {groupedByYear[year].map((pyq) => (
-                  <Card 
-                    key={pyq._id} 
-                    className="overflow-hidden transition-shadow hover:shadow-lg"
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-2 mb-3">
-                        <div className="flex items-center gap-2">
-                          <Badge className={EXAM_TYPE_COLORS[pyq.examType]}>
-                            {EXAM_TYPE_LABELS[pyq.examType]}
-                          </Badge>
-                          <Badge variant="outline">
-                            {BRANCH_LABELS[pyq.branch]} - Sem {pyq.semester}
-                          </Badge>
-                        </div>
-                      </div>
-                      
-                      <h3 className="font-semibold mb-1 line-clamp-2">{pyq.title}</h3>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3">
-                        {pyq.subject}
+          </div>
+
+          <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4 mb-6 sm:mb-8">
+            {stats.map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card className={cn(
+                  "relative overflow-hidden p-3 sm:p-5",
+                  "border-zinc-200/50 dark:border-zinc-800/50",
+                  "bg-white/80 dark:bg-zinc-900/80",
+                  "backdrop-blur-sm",
+                  "hover:shadow-lg hover:shadow-zinc-950/5",
+                  "transition-all duration-300"
+                )}>
+                  <div className={cn(
+                    "absolute inset-0 opacity-50",
+                    `bg-gradient-to-br ${stat.bgGradient}`
+                  )} />
+                  <div className="relative flex items-center gap-2 sm:gap-4">
+                    <div className={cn(
+                      "flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl",
+                      "bg-gradient-to-br shadow-sm",
+                      stat.gradient
+                    )}>
+                      <stat.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white m-2 sm:m-3" />
+                    </div>
+                    <div>
+                      <p className="text-lg sm:text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                        {stat.value}
                       </p>
-                      
-                      {pyq.description && (
-                        <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-3 line-clamp-2">
-                          {pyq.description}
-                        </p>
-                      )}
+                      <p className="text-[10px] sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+                        {stat.label}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
 
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => setSelectedPYQ(pyq)}
-                        >
-                          View
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => handleDownload(pyq)}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {selectedPYQ && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setSelectedPYQ(null)}
-        >
-          <div 
-            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white dark:bg-zinc-900 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white dark:bg-zinc-900 p-4">
-              <div className="flex items-center gap-2">
-                <Badge className={EXAM_TYPE_COLORS[selectedPYQ.examType]}>
-                  {EXAM_TYPE_LABELS[selectedPYQ.examType]}
-                </Badge>
-                <Badge variant="outline">
-                  {BRANCH_LABELS[selectedPYQ.branch]} - Semester {selectedPYQ.semester}
-                </Badge>
-                <Badge variant="secondary">{selectedPYQ.year}</Badge>
+          <Card className={cn(
+            "mb-6 overflow-hidden",
+            "border-zinc-200/50 dark:border-zinc-800/50",
+            "bg-white/80 dark:bg-zinc-900/80",
+            "backdrop-blur-sm"
+          )}>
+            <div className="flex flex-col gap-4 p-4 sm:p-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
+                <Input
+                  placeholder="Search by subject, title, or description..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={cn(
+                    "pl-12 h-12 rounded-xl",
+                    "bg-zinc-50 dark:bg-zinc-800/50",
+                    "border-zinc-200 dark:border-zinc-700",
+                    "focus:border-indigo-500 focus:ring-indigo-500/20",
+                    "text-base"
+                  )}
+                />
               </div>
               <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSelectedPYQ(null)}
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                className={cn(
+                  "gap-2 h-11 px-5 rounded-xl",
+                  "border-zinc-200 dark:border-zinc-700",
+                  "hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                  showFilters && "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800"
+                )}
               >
-                <X className="h-5 w-5" />
+                <Filter className="h-4 w-4" />
+                Filters
+                {activeFiltersCount > 0 && (
+                  <Badge 
+                    variant="default"
+                    className="ml-1 h-5 w-5 p-0 flex items-center justify-center rounded-full bg-indigo-500"
+                  >
+                    {activeFiltersCount}
+                  </Badge>
+                )}
               </Button>
             </div>
-            
-            <div className="p-6">
-              <h2 className="mb-2 text-2xl font-bold">{selectedPYQ.title}</h2>
-              
-              <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-zinc-500">
-                <div className="flex items-center gap-1">
-                  <BookOpen className="h-4 w-4" />
-                  <span>{selectedPYQ.subject}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>{selectedPYQ.year}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  <span>Uploaded by {selectedPYQ.uploadedBy}</span>
-                </div>
-              </div>
 
-              {selectedPYQ.description && (
-                <div className="mb-6">
-                  <h3 className="mb-2 font-semibold">Description</h3>
-                  <p className="text-zinc-600 dark:text-zinc-300">
-                    {selectedPYQ.description}
-                  </p>
-                </div>
+            <AnimatePresence>
+              {showFilters && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="border-t border-zinc-200 dark:border-zinc-800"
+                >
+                  <div className="p-4 sm:p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                        Filter Options
+                      </h3>
+                      {activeFiltersCount > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedBranch('all');
+                            setSelectedSemester('all');
+                            setSelectedExamType('all');
+                            setSelectedYear('all');
+                          }}
+                          className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+                        >
+                          Clear All
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Branch</label>
+                        <select
+                          value={selectedBranch}
+                          onChange={(e) => setSelectedBranch(e.target.value)}
+                          className={cn(
+                            "w-full h-11 rounded-xl px-4",
+                            "bg-zinc-50 dark:bg-zinc-800/50",
+                            "border border-zinc-200 dark:border-zinc-700",
+                            "focus:border-indigo-500 focus:ring-indigo-500/20",
+                            "text-sm"
+                          )}
+                        >
+                          {BRANCHES.map((branch) => (
+                            <option key={branch.id} value={branch.id}>{branch.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Semester</label>
+                        <select
+                          value={selectedSemester}
+                          onChange={(e) => setSelectedSemester(e.target.value)}
+                          className={cn(
+                            "w-full h-11 rounded-xl px-4",
+                            "bg-zinc-50 dark:bg-zinc-800/50",
+                            "border border-zinc-200 dark:border-zinc-700",
+                            "focus:border-indigo-500 focus:ring-indigo-500/20",
+                            "text-sm"
+                          )}
+                        >
+                          {SEMESTERS.map((sem) => (
+                            <option key={sem.id} value={sem.id}>{sem.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Exam Type</label>
+                        <select
+                          value={selectedExamType}
+                          onChange={(e) => setSelectedExamType(e.target.value)}
+                          className={cn(
+                            "w-full h-11 rounded-xl px-4",
+                            "bg-zinc-50 dark:bg-zinc-800/50",
+                            "border border-zinc-200 dark:border-zinc-700",
+                            "focus:border-indigo-500 focus:ring-indigo-500/20",
+                            "text-sm"
+                          )}
+                        >
+                          {EXAM_TYPES.map((type) => (
+                            <option key={type.id} value={type.id}>{type.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Year</label>
+                        <select
+                          value={selectedYear}
+                          onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
+                          className={cn(
+                            "w-full h-11 rounded-xl px-4",
+                            "bg-zinc-50 dark:bg-zinc-800/50",
+                            "border border-zinc-200 dark:border-zinc-700",
+                            "focus:border-indigo-500 focus:ring-indigo-500/20",
+                            "text-sm"
+                          )}
+                        >
+                          <option value="all">All Years</option>
+                          {YEARS.map((year) => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
               )}
+            </AnimatePresence>
+          </Card>
 
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Button 
-                  size="lg" 
-                  className="flex-1"
-                  onClick={() => handleDownload(selectedPYQ)}
-                >
-                  <Download className="mr-2 h-5 w-5" />
-                  Download PDF
-                </Button>
-                <a
-                  href={selectedPYQ.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-300 px-6 py-3 font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                >
-                  <ExternalLink className="h-5 w-5" />
-                  Open in New Tab
-                </a>
-              </div>
+          {isLoading ? (
+            <div className="space-y-6">
+              {[...Array(3)].map((_, i) => (
+                <div key={i}>
+                  <div className="h-6 w-24 rounded bg-zinc-200 dark:bg-zinc-800 mb-4" />
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {[...Array(3)].map((_, j) => (
+                      <Card key={j} className="animate-pulse h-40" />
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        </div>
-      )}
+          ) : filteredPYQs.length === 0 ? (
+            <Card className="py-16">
+              <div className="flex flex-col items-center justify-center text-center px-4">
+                <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 flex items-center justify-center mb-6">
+                  <Award className="h-10 w-10 text-zinc-400" />
+                </div>
+                <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">No papers found</h3>
+                <p className="text-zinc-500 dark:text-zinc-400 max-w-sm">
+                  {activeFiltersCount > 0 || searchQuery
+                    ? 'Try adjusting your filters or search query'
+                    : 'Previous year questions will appear here'}
+                </p>
+              </div>
+            </Card>
+          ) : (
+            <div className="space-y-8">
+              {uniqueYears.map((year) => (
+                <div key={year}>
+                  <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="mb-4 flex items-center gap-4"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">{year.toString().slice(-2)}</span>
+                      </div>
+                      <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">{year}</h2>
+                    </div>
+                    <Badge variant="secondary" className="rounded-lg">
+                      {groupedByYear[year].length} papers
+                    </Badge>
+                    <div className="flex-1 h-px bg-gradient-to-r from-zinc-200 to-transparent dark:from-zinc-800" />
+                  </motion.div>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {groupedByYear[year].map((pyq, index) => {
+                      const examStyle = EXAM_TYPE_STYLES[pyq.examType] || EXAM_TYPE_STYLES.assignment;
+                      return (
+                        <motion.div
+                          key={pyq._id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                        >
+                          <Card 
+                            className={cn(
+                              "overflow-hidden cursor-pointer transition-all duration-300",
+                              "border-zinc-200/50 dark:border-zinc-800/50",
+                              "bg-white/80 dark:bg-zinc-900/80",
+                              "backdrop-blur-sm",
+                              "hover:shadow-xl hover:shadow-zinc-950/10",
+                              "hover:border-indigo-200 dark:hover:border-indigo-800/50",
+                              "hover:-translate-y-1"
+                            )}
+                            onClick={() => setSelectedPYQ(pyq)}
+                          >
+                            <div className="p-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Badge 
+                                  className={cn(
+                                    examStyle.bg,
+                                    examStyle.text,
+                                    "border font-medium text-xs px-2.5 py-1"
+                                  )}
+                                >
+                                  {EXAM_TYPE_LABELS[pyq.examType]}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {pyq.branch.toUpperCase()} - Sem {pyq.semester}
+                                </Badge>
+                              </div>
+                              
+                              <h3 className="font-semibold mb-2 line-clamp-2 text-zinc-900 dark:text-zinc-100">
+                                {pyq.title}
+                              </h3>
+                              <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3">
+                                {pyq.subject}
+                              </p>
+                              
+                              <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                                <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                                  {pyq.uploadedBy}
+                                </span>
+                                <Button
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDownload(pyq);
+                                  }}
+                                  className={cn(
+                                    "h-8 text-xs font-medium",
+                                    "bg-gradient-to-r from-indigo-500 to-purple-500",
+                                    "hover:from-indigo-600 hover:to-purple-600",
+                                    "shadow-lg shadow-indigo-500/25"
+                                  )}
+                                >
+                                  <Download className="h-3.5 w-3.5 mr-1" />
+                                  Download
+                                </Button>
+                              </div>
+                            </div>
+                          </Card>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      </div>
+
+      <AnimatePresence>
+        {selectedPYQ && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setSelectedPYQ(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md p-3 sm:p-4">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                  <Badge className="bg-indigo-500 text-white text-[10px] sm:text-xs">
+                    {EXAM_TYPE_LABELS[selectedPYQ.examType]}
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px] sm:text-xs hidden xs:inline">
+                    {selectedPYQ.branch.toUpperCase()} - Sem {selectedPYQ.semester}
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px] sm:text-xs xs:hidden">
+                    {selectedPYQ.branch.toUpperCase()}
+                  </Badge>
+                  <Badge variant="secondary" className="text-[10px] sm:text-xs">{selectedPYQ.year}</Badge>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSelectedPYQ(null)}
+                  className="rounded-xl flex-shrink-0"
+                >
+                  <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                </Button>
+              </div>
+              
+              <div className="p-6">
+                <h2 className="mb-4 text-2xl font-bold text-zinc-900 dark:text-zinc-50">{selectedPYQ.title}</h2>
+                
+                <div className="mb-6 flex flex-wrap items-center gap-4 text-sm text-zinc-500">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center">
+                      <BookOpen className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <span>{selectedPYQ.subject}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center">
+                      <Calendar className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <span>{selectedPYQ.year}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                      <Clock className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+                    </div>
+                    <span>Uploaded by {selectedPYQ.uploadedBy}</span>
+                  </div>
+                </div>
+
+                {selectedPYQ.description && (
+                  <div className="mb-6 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50">
+                    <h3 className="mb-2 font-semibold text-zinc-900 dark:text-zinc-100">Description</h3>
+                    <p className="text-zinc-600 dark:text-zinc-300">
+                      {selectedPYQ.description}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button 
+                    size="lg" 
+                    className={cn(
+                      "flex-1 rounded-xl",
+                      "bg-gradient-to-r from-indigo-500 to-purple-500",
+                      "hover:from-indigo-600 hover:to-purple-600",
+                      "shadow-lg shadow-indigo-500/25"
+                    )}
+                    onClick={() => handleDownload(selectedPYQ)}
+                  >
+                    <Download className="mr-2 h-5 w-5" />
+                    Download PDF
+                  </Button>
+                  <a
+                    href={selectedPYQ.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      "flex items-center justify-center gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700",
+                      "px-6 py-3 font-medium transition-all duration-200",
+                      "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                    )}
+                  >
+                    <ExternalLink className="h-5 w-5" />
+                    Open in New Tab
+                  </a>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

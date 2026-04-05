@@ -3,10 +3,13 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useContentStore } from '@/hooks/useContent';
 import { ContentCard, SearchFilters, Pagination } from '@/components/shared';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { FileText, Search, Sparkles, TrendingUp, Filter } from 'lucide-react';
 import { downloadFile } from '@/lib/download-file';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 export default function SearchPage() {
   const { contents, filters, setFilters, pagination, fetchContents, isLoading } = useContentStore();
@@ -76,79 +79,131 @@ export default function SearchPage() {
     }
   };
 
+  const activeFiltersCount = [localFilters.type, localFilters.branch, localFilters.semester].filter(Boolean).length;
+
   return (
-    <div className="space-y-6 px-4 sm:space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Search Content</h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400 sm:text-base">
-          Find notes, assignments, PYQs, events, and jobs
-        </p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SearchFilters filters={localFilters} onFilterChange={handleFilterChange} />
-        </CardContent>
-      </Card>
-
-      <div>
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-base font-semibold sm:text-lg">
-            Results ({filteredContents.length})
-          </h2>
-        </div>
-
-        {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[...Array(9)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader className="pb-3">
-                  <div className="h-4 w-16 rounded bg-zinc-200 dark:bg-zinc-800" />
-                  <div className="mt-2 h-6 w-full rounded bg-zinc-200 dark:bg-zinc-800" />
-                  <div className="h-4 w-full rounded bg-zinc-200 dark:bg-zinc-800" />
-                </CardHeader>
-                <CardContent>
-                  <div className="flex gap-2">
-                    <div className="h-6 w-16 rounded bg-zinc-200 dark:bg-zinc-800" />
-                    <div className="h-6 w-16 rounded bg-zinc-200 dark:bg-zinc-800" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+    <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-indigo-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950/20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="py-8 sm:py-12"
+        >
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                <Search className="h-5 w-5 text-white" />
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight bg-gradient-to-r from-zinc-900 to-zinc-700 dark:from-zinc-50 dark:to-zinc-300 bg-clip-text text-transparent">
+                Search Content
+              </h1>
+            </div>
+            <p className="text-zinc-500 dark:text-zinc-400 text-base">
+              Find notes, assignments, PYQs, events, and more
+            </p>
           </div>
-        ) : filteredContents.length === 0 ? (
-          <Card className="py-12">
-            <CardContent className="flex flex-col items-center justify-center text-center">
-              <FileText className="mb-4 h-12 w-12 text-zinc-400" />
-              <h3 className="mb-2 text-lg font-semibold">No results found</h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Try adjusting your filters or search terms
-              </p>
-            </CardContent>
+
+          <Card className={cn(
+            "mb-8 overflow-hidden",
+            "border-zinc-200/50 dark:border-zinc-800/50",
+            "bg-white/80 dark:bg-zinc-900/80",
+            "backdrop-blur-sm"
+          )}>
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Filter className="h-4 w-4 text-zinc-500" />
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  Filters
+                </h3>
+                {activeFiltersCount > 0 && (
+                  <Badge variant="secondary" className="rounded-lg">
+                    {activeFiltersCount} active
+                  </Badge>
+                )}
+              </div>
+              <SearchFilters filters={localFilters} onFilterChange={handleFilterChange} />
+            </div>
           </Card>
-        ) : (
-          <>
+
+          <div className="mb-6">
+            <div className="flex items-center gap-3 mb-2">
+              <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+                Results
+              </h2>
+              <Badge variant="secondary" className="rounded-lg px-3">
+                {filteredContents.length} found
+              </Badge>
+              <div className="flex-1 h-px bg-gradient-to-r from-zinc-200 to-transparent dark:from-zinc-800" />
+              {localFilters.search && (
+                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                  for "{localFilters.search}"
+                </span>
+              )}
+            </div>
+          </div>
+
+          {isLoading ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredContents.map((content) => (
-                <ContentCard
-                  key={content._id}
-                  content={content}
-                  onDownload={handleDownload}
-                />
+              {[...Array(9)].map((_, i) => (
+                <Card key={i} className="animate-pulse overflow-hidden">
+                  <div className="p-5 space-y-4">
+                    <div className="flex gap-2">
+                      <div className="h-6 w-16 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+                      <div className="h-6 w-12 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-5 w-full rounded bg-zinc-200 dark:bg-zinc-800" />
+                      <div className="h-4 w-3/4 rounded bg-zinc-200 dark:bg-zinc-800" />
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="h-5 w-14 rounded bg-zinc-200 dark:bg-zinc-800" />
+                      <div className="h-5 w-16 rounded bg-zinc-200 dark:bg-zinc-800" />
+                    </div>
+                  </div>
+                </Card>
               ))}
             </div>
-            <div className="mt-8">
-              <Pagination
-                currentPage={pagination.page}
-                totalPages={pagination.totalPages}
-                onPageChange={handlePageChange}
-              />
-            </div>
-          </>
-        )}
+          ) : filteredContents.length === 0 ? (
+            <Card className="py-16">
+              <div className="flex flex-col items-center justify-center text-center px-4">
+                <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 flex items-center justify-center mb-6">
+                  <Search className="h-10 w-10 text-zinc-400" />
+                </div>
+                <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
+                  No results found
+                </h3>
+                <p className="text-zinc-500 dark:text-zinc-400 max-w-sm">
+                  Try adjusting your filters or search terms
+                </p>
+              </div>
+            </Card>
+          ) : (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredContents.map((content, index) => (
+                  <motion.div
+                    key={content._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <ContentCard
+                      content={content}
+                      onDownload={handleDownload}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+              <div className="mt-12 flex justify-center">
+                <Pagination
+                  currentPage={pagination.page}
+                  totalPages={pagination.totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            </>
+          )}
+        </motion.div>
       </div>
     </div>
   );
