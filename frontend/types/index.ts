@@ -97,7 +97,8 @@ export const SEMESTERS: Semester[] = [
 export enum UserRole {
   STUDENT = 'student',
   TEACHER = 'teacher',
-  ADMIN = 'admin'
+  ADMIN = 'admin',
+  SUPER_ADMIN = 'super_admin'
 }
 
 export interface User {

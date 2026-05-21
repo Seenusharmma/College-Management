@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import { 
   Users, FileText, Download, Eye, Upload, Trash2, Edit2, 
-  BarChart3, CheckCircle, XCircle, TrendingUp, Calendar, Shield, UserCog, Image, X, Link as LinkIcon, BookOpen, Sparkles
+  BarChart3, CheckCircle, XCircle, TrendingUp, Calendar, Shield, UserCog, Image, X, Link as LinkIcon, BookOpen, Sparkles, UserPlus
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { downloadFile } from '@/lib/download-file';
@@ -136,10 +136,18 @@ const ROLES = [
 
 interface AdminClientProps {
   userEmail: string;
-  isSuperAdmin: boolean;
+  isAdmin: boolean;
+  userRole: string;
 }
 
-export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProps) {
+const ADMIN_EMAILS = [
+  'roshansharma404error@gmail.com',
+  'admin@academichub.com'
+];
+
+export default function AdminClient({ userEmail, isAdmin, userRole }: AdminClientProps) {
+  const effectiveIsAdmin = isAdmin || (userEmail ? ADMIN_EMAILS.includes(userEmail.toLowerCase()) : false);
+  const effectiveUserRole = effectiveIsAdmin ? (userRole || 'super_admin') : userRole;
   const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'upload' | 'users' | 'gallery' | 'events' | 'pyq'>('overview');
   const [contents, setContents] = useState<Content[]>([]);
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
@@ -155,6 +163,14 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
   const [editingEventFile, setEditingEventFile] = useState<File | null>(null);
   const [editingPYQ, setEditingPYQ] = useState<PYQData | null>(null);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState({
+    email: '',
+    name: '',
+    role: 'student',
+    branch: '',
+    semester: ''
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState<string>('');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -194,13 +210,19 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
   });
 
   useEffect(() => {
+    if (effectiveUserRole !== 'super_admin' && activeTab === 'users') {
+      setActiveTab('overview');
+    }
+  }, [effectiveUserRole, activeTab]);
+
+  useEffect(() => {
     fetchContent();
     fetchStats();
-    fetchUsers();
+    if (effectiveUserRole === 'super_admin') fetchUsers();
     fetchGallery();
     fetchEvents();
     fetchPYQs();
-  }, []);
+  }, [effectiveUserRole]);
 
   const fetchContent = async () => {
     try {
@@ -318,7 +340,7 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
       } else {
         toast.error(data.error || 'Upload failed');
       }
-    } catch (error) {
+    } catch {
       toast.error('Upload failed');
     } finally {
       setIsUploading(false);
@@ -420,7 +442,7 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
       } else {
         toast.error(data.error || 'Upload failed');
       }
-    } catch (error) {
+    } catch {
       toast.error('Upload failed');
     } finally {
       setIsUploading(false);
@@ -459,7 +481,7 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
       } else {
         toast.error(data.error || 'Upload failed');
       }
-    } catch (error) {
+    } catch {
       toast.error('Upload failed');
     } finally {
       setIsUploading(false);
@@ -506,7 +528,7 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
       } else {
         toast.error(data.error || 'Failed to create event');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to create event');
     } finally {
       setIsUploading(false);
@@ -670,6 +692,7 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: editingUser.clerkUserId,
+          _id: editingUser._id,
           role: editingUser.role
         })
       });
@@ -684,6 +707,35 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
       }
     } catch {
       toast.error('Failed to update user');
+    }
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!createUserForm.email || !createUserForm.name || !createUserForm.role) {
+      toast.error('Email, name and role are required');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createUserForm)
+      });
+
+      if (response.ok) {
+        toast.success('User created successfully');
+        setShowCreateUser(false);
+        setCreateUserForm({ email: '', name: '', role: 'student', branch: '', semester: '' });
+        fetchUsers();
+      } else {
+        const data = await response.json();
+        toast.error(data.error || 'Failed to create user');
+      }
+    } catch {
+      toast.error('Failed to create user');
     }
   };
 
@@ -744,7 +796,7 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
     { id: 'gallery' as const, label: 'Gallery', icon: Image },
     { id: 'events' as const, label: 'Events', icon: Calendar },
     { id: 'pyq' as const, label: 'PYQ', icon: BookOpen },
-    { id: 'users' as const, label: 'Users', icon: UserCog },
+    ...(effectiveUserRole === 'super_admin' ? [{ id: 'users' as const, label: 'Users', icon: UserCog }] : []),
   ];
 
   const statCards = [
@@ -754,7 +806,7 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
     { label: 'Total Views', value: stats?.totalViews || 0, icon: Eye, gradient: 'from-amber-500 to-orange-500', bgGradient: 'from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30' }
   ];
 
-  if (!isSuperAdmin) {
+  if (!effectiveIsAdmin) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-indigo-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950/20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div className="max-w-md mx-auto py-16">
@@ -764,7 +816,7 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
             </div>
             <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">Access Denied</h3>
             <p className="text-zinc-500 dark:text-zinc-400 mb-6">
-              You need super admin privileges to access this page.
+              You need admin privileges to access this page.
             </p>
             <Link href="/dashboard">
               <Button className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500">
@@ -802,9 +854,14 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
               <Badge variant="outline" className="rounded-lg text-sm font-medium">
                 {userEmail}
               </Badge>
-              <Badge className="rounded-lg text-sm font-medium bg-gradient-to-r from-rose-500 to-red-500 text-white">
+              <Badge className={cn(
+                "rounded-lg text-sm font-medium",
+                effectiveUserRole === 'super_admin'
+                  ? "bg-gradient-to-r from-rose-500 to-red-500 text-white"
+                  : "bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
+              )}>
                 <Sparkles className="h-3 w-3 mr-1" />
-                Super Admin
+                {effectiveUserRole === 'super_admin' ? 'Super Admin' : 'Admin'}
               </Badge>
             </div>
           </div>
@@ -1640,13 +1697,26 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
           {activeTab === 'users' && (
             <Card className="border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                    <Shield className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                      <Shield className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div>
+                      <CardTitle>User Management</CardTitle>
+                      <p className="text-sm text-zinc-500">Manage user roles and permissions</p>
+                    </div>
                   </div>
-                  User Management
-                </CardTitle>
-                <p className="text-sm text-zinc-500">Manage user roles and permissions</p>
+                  {effectiveUserRole === 'super_admin' && (
+                    <Button
+                      onClick={() => setShowCreateUser(true)}
+                      className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-lg shadow-indigo-500/25"
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Create User
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -2058,7 +2128,7 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Select Role</label>
                     <div className="grid grid-cols-2 gap-2">
-                      {ROLES.map((role) => (
+                      {ROLES.filter(role => effectiveUserRole === 'super_admin' || role.value !== 'super_admin').map((role) => (
                         <button
                           key={role.value}
                           onClick={() => setEditingUser({ ...editingUser, role: role.value as UserData['role'] })}
@@ -2087,6 +2157,101 @@ export default function AdminClient({ userEmail, isSuperAdmin }: AdminClientProp
                       Cancel
                     </Button>
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {showCreateUser && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+              <Card className="w-full max-w-lg mx-4 rounded-2xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                      <UserPlus className="h-4 w-4 text-white" />
+                    </div>
+                    Create New User
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleCreateUser} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Email *</label>
+                      <Input
+                        type="email"
+                        value={createUserForm.email}
+                        onChange={(e) => setCreateUserForm({ ...createUserForm, email: e.target.value })}
+                        placeholder="user@example.com"
+                        required
+                        className="rounded-xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Name *</label>
+                      <Input
+                        value={createUserForm.name}
+                        onChange={(e) => setCreateUserForm({ ...createUserForm, name: e.target.value })}
+                        placeholder="Full name"
+                        required
+                        className="rounded-xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Role *</label>
+                      <select
+                        value={createUserForm.role}
+                        onChange={(e) => setCreateUserForm({ ...createUserForm, role: e.target.value })}
+                        className="w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 text-sm"
+                      >
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Branch</label>
+                        <select
+                          value={createUserForm.branch}
+                          onChange={(e) => setCreateUserForm({ ...createUserForm, branch: e.target.value })}
+                          className="w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 text-sm"
+                        >
+                          <option value="">Select Branch</option>
+                          {BRANCHES.map((branch) => (
+                            <option key={branch.id} value={branch.id}>{branch.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Semester</label>
+                        <select
+                          value={createUserForm.semester}
+                          onChange={(e) => setCreateUserForm({ ...createUserForm, semester: e.target.value })}
+                          className="w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 text-sm"
+                        >
+                          <option value="">Select Semester</option>
+                          {SEMESTERS.map((sem) => (
+                            <option key={sem.id} value={sem.id}>{sem.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <Button type="submit" className="flex-1 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-lg shadow-indigo-500/25">
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Create User
+                      </Button>
+                      <Button type="button" variant="outline" onClick={() => setShowCreateUser(false)} className="flex-1 rounded-xl">
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
                 </CardContent>
               </Card>
             </div>

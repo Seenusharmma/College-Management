@@ -12,7 +12,7 @@ async function checkIsSuperAdmin(userId: string): Promise<boolean> {
     
     const dbUser = await UserModel.findOne({ clerkUserId: userId });
     
-    if (dbUser?.role === 'super_admin') {
+    if (dbUser?.role === 'super_admin' || dbUser?.role === 'admin') {
       return true;
     }
     

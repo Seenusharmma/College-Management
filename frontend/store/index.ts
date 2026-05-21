@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { isAdminEmail } from '@/lib/admin-config';
 
-export type UserRole = 'student' | 'teacher' | 'super_admin';
+export type UserRole = 'student' | 'teacher' | 'admin' | 'super_admin';
 
 export interface User {
   id: string;
@@ -48,7 +48,7 @@ export const useUserStore = create<UserState>()(
       },
       isAdmin: () => {
         const { user } = get();
-        if (user?.role === 'super_admin') return true;
+        if (user?.role === 'super_admin' || user?.role === 'admin') return true;
         return isAdminEmail(user?.email);
       }
     }),

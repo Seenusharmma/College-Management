@@ -1,10 +1,29 @@
 import { Request, Response } from 'express';
 import { AuthRequest, ApiResponse } from '../types/index.js';
+import { UserRole } from '../models/user.model.js';
 import { userService } from '../services/user.service.js';
 import { AppError } from '../middlewares/errorHandler.js';
 import { clerkClient } from '@clerk/express';
 
 export class UserController {
+  async createUser(req: AuthRequest, res: Response<ApiResponse>) {
+    try {
+      const user = await userService.createUser(req.body);
+
+      res.json({
+        success: true,
+        data: user,
+        message: 'User created successfully'
+      });
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      if (error instanceof Error) {
+        throw new AppError(error.message, 400);
+      }
+      throw error;
+    }
+  }
+
   async syncUser(req: AuthRequest, res: Response<ApiResponse>) {
     try {
       if (!req.user) {
@@ -186,6 +205,12 @@ export class UserController {
     try {
       const { id } = req.params;
       const { role } = req.body;
+
+      const requestingUser = await userService.findByClerkId(req.user!.id);
+      if (role === UserRole.SUPER_ADMIN && requestingUser?.role !== UserRole.SUPER_ADMIN) {
+        throw new AppError('Only super admins can assign the super_admin role', 403);
+      }
+
       const updated = await userService.updateRole(id, role);
 
       res.json({

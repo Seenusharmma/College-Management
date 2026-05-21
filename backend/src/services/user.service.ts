@@ -1,6 +1,6 @@
 import { User, IUser, UserRole } from '../models/user.model.js';
 import { AppError } from '../middlewares/errorHandler.js';
-import { UserUpdateInput } from '../validators/content.validator.js';
+import { UserUpdateInput, CreateUserInput } from '../validators/content.validator.js';
 import { Types } from 'mongoose';
 
 export class UserService {
@@ -18,6 +18,24 @@ export class UserService {
       await user.save();
     }
     
+    return user;
+  }
+
+  async createUser(data: CreateUserInput): Promise<IUser> {
+    const existingUser = await User.findOne({ email: data.email });
+    if (existingUser) {
+      throw new AppError('User with this email already exists', 400);
+    }
+
+    const user = new User({
+      clerkUserId: `manual_${Date.now()}`,
+      email: data.email,
+      name: data.name,
+      role: data.role as UserRole,
+      branch: data.branch,
+      semester: data.semester
+    });
+    await user.save();
     return user;
   }
 

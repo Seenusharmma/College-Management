@@ -52,10 +52,11 @@ export default function ProfilePage() {
   const roleColors: Record<string, { bg: string; text: string }> = {
     student: { bg: 'from-blue-500 to-cyan-500', text: 'text-blue-600 dark:text-blue-400' },
     teacher: { bg: 'from-green-500 to-emerald-500', text: 'text-green-600 dark:text-green-400' },
+    admin: { bg: 'from-orange-500 to-amber-500', text: 'text-orange-600 dark:text-orange-400' },
     super_admin: { bg: 'from-purple-500 to-pink-500', text: 'text-purple-600 dark:text-purple-400' }
   };
 
-  const roleStyle = roleColors[storedUser?.role || 'student'];
+  const roleStyle = roleColors[storedUser?.role || 'student'] ?? roleColors.student;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-indigo-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950/20 -mx-4 px-4 sm:px-6 lg:px-8">

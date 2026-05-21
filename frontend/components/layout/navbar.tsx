@@ -72,6 +72,34 @@ export function Navbar() {
     setMobileOpen(false);
   }, [pathname]);
 
+  // Sync user data from MongoDB on mount / clerk user change
+  useEffect(() => {
+    if (!clerkUser?.id) return;
+
+    const syncUser = async () => {
+      try {
+        const res = await fetch('/api/users/sync', { method: 'POST' });
+        const data = await res.json();
+        if (data.success && data.data) {
+          userStore.setUser({
+            id: data.data._id,
+            clerkUserId: data.data.clerkUserId,
+            email: data.data.email,
+            name: data.data.name,
+            avatar: data.data.avatar,
+            role: data.data.role,
+            branch: data.data.branch,
+            semester: data.data.semester
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to sync user:', err);
+      }
+    };
+
+    syncUser();
+  }, [clerkUser?.id]);
+
   return (
     <nav className={cn(
       "fixed top-0 left-0 right-0 z-50 transition-all duration-300",

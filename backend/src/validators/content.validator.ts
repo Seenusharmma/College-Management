@@ -44,3 +44,13 @@ export type CreateContentInput = z.infer<typeof createContentSchema>;
 export type UpdateContentInput = z.infer<typeof updateContentSchema>;
 export type ContentQueryInput = z.infer<typeof contentQuerySchema>;
 export type UserUpdateInput = z.infer<typeof userUpdateSchema>;
+
+export const createUserSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(2).max(100),
+  role: z.enum(['student', 'teacher', 'admin']),
+  branch: z.string().min(2).max(50).optional(),
+  semester: z.coerce.number().int().min(1).max(8).optional()
+});
+
+export type CreateUserInput = z.infer<typeof createUserSchema>;

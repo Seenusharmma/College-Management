@@ -26,10 +26,12 @@ export const authenticate = async (
       return;
     }
 
+    const dbUser = await User.findOne({ clerkUserId: verification.sub });
+    
     req.user = {
       id: verification.sub,
       email: (verification as any).email || '',
-      role: 'student'
+      role: dbUser?.role || 'student'
     };
 
     next();
@@ -85,10 +87,11 @@ export const optionalAuth = async (
     });
     
     if (verification) {
+      const dbUser = await User.findOne({ clerkUserId: verification.sub });
       req.user = {
         id: verification.sub,
         email: (verification as any).email || '',
-        role: 'student'
+        role: dbUser?.role || 'student'
       };
     }
     
